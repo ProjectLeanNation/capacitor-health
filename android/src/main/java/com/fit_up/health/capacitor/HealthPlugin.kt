@@ -16,9 +16,11 @@ import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseRouteResult
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.HeightRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
+import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
@@ -42,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.jvm.optionals.getOrDefault
 
 enum class CapHealthPermission {
-    READ_STEPS, READ_WORKOUTS, READ_HEART_RATE, READ_ROUTE, READ_ACTIVE_CALORIES, READ_TOTAL_CALORIES, READ_DISTANCE, READ_SLEEP;
+    READ_STEPS, READ_WORKOUTS, READ_HEART_RATE, READ_ROUTE, READ_ACTIVE_CALORIES, READ_TOTAL_CALORIES, READ_DISTANCE, READ_SLEEP, READ_HEIGHT, READ_WEIGHT, READ_BODY_TEMPERATURE;
 
     companion object {
         fun from(s: String): CapHealthPermission? {
@@ -90,6 +92,18 @@ enum class CapHealthPermission {
         Permission(
             alias = "READ_SLEEP",
             strings = ["android.permission.health.READ_SLEEP"]
+        ),
+        Permission(
+            alias = "READ_HEIGHT",
+            strings = ["android.permission.health.READ_HEIGHT"]
+        ),
+        Permission(
+            alias = "READ_WEIGHT",
+            strings = ["android.permission.health.READ_WEIGHT"]
+        ),
+        Permission(
+            alias = "READ_BODY_TEMPERATURE",
+            strings = ["android.permission.health.READ_BODY_TEMPERATURE"]
         )
     ]
 )
@@ -147,7 +161,9 @@ class HealthPlugin : Plugin() {
         Pair(CapHealthPermission.READ_TOTAL_CALORIES, "android.permission.health.READ_TOTAL_CALORIES_BURNED"),
         Pair(CapHealthPermission.READ_DISTANCE, "android.permission.health.READ_DISTANCE"),
         Pair(CapHealthPermission.READ_STEPS, "android.permission.health.READ_STEPS"),
-        Pair(CapHealthPermission.READ_SLEEP, "android.permission.health.READ_SLEEP")
+        Pair(CapHealthPermission.READ_SLEEP, "android.permission.health.READ_SLEEP"),
+        Pair(CapHealthPermission.READ_HEIGHT, "android.permission.health.READ_HEIGHT"),
+        Pair(CapHealthPermission.READ_WEIGHT, "android.permission.health.READ_WEIGHT")
     )
 
     // Check if a set of permissions are granted
@@ -703,5 +719,158 @@ class HealthPlugin : Plugin() {
         5 to "DEEP",
         6 to "REM"
     )
+    
+    @PluginMethod
+    fun queryHeight(call: PluginCall) {
+        try {
+            if (!hasPermission(CapHealthPermission.READ_HEIGHT)) {
+                call.reject("Height permission not granted")
+                return
+            }
+            
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    // Create a request to read height records
+                    val request = ReadRecordsRequest(
+                        recordType = HeightRecord::class,
+                        timeRangeFilter = TimeRangeFilter.latest(),
+                        ascendingOrder = false,
+                        limit = 1
+                    )
+                    
+                    val response = healthConnectClient.readRecords(request)
+                    
+                    if (response.records.isEmpty()) {
+                        call.resolve(JSObject().apply {
+                            put("height", null)
+                            put("timestamp", null)
+                        })
+                        return@launch
+                    }
+                    
+                    val heightRecord = response.records.first()
+                    val result = JSObject().apply {
+                        put("height", heightRecord.height.inMeters)
+                        put("timestamp", heightRecord.time.toString())
+                        put("metadata", JSObject().apply {
+                            put("id", heightRecord.metadata.id)
+                            put("lastModifiedTime", heightRecord.metadata.lastModifiedTime.toString())
+                            put("clientRecordId", heightRecord.metadata.clientRecordId ?: "")
+                            put("dataOrigin", heightRecord.metadata.dataOrigin.packageName)
+                        })
+                    }
+                    
+                    call.resolve(result)
+                    
+                } catch (e: Exception) {
+                    call.reject("Error reading height data: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            call.reject(e.message)
+        }
+    }
+    
+    @PluginMethod
+    fun queryWeight(call: PluginCall) {
+        try {
+            if (!hasPermission(CapHealthPermission.READ_WEIGHT)) {
+                call.reject("Weight permission not granted")
+                return
+            }
+            
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    // Create a request to read weight records
+                    val request = ReadRecordsRequest(
+                        recordType = WeightRecord::class,
+                        timeRangeFilter = TimeRangeFilter.latest(),
+                        ascendingOrder = false,
+                        limit = 1
+                    )
+                    
+                    val response = healthConnectClient.readRecords(request)
+                    
+                    if (response.records.isEmpty()) {
+                        call.resolve(JSObject().apply {
+                            put("weight", null)
+                            put("timestamp", null)
+                        })
+                        return@launch
+                    }
+                    
+                    val weightRecord = response.records.first()
+                    val result = JSObject().apply {
+                        put("weight", weightRecord.weight.inKilograms)
+                        put("timestamp", weightRecord.time.toString())
+                        put("metadata", JSObject().apply {
+                            put("id", weightRecord.metadata.id)
+                            put("lastModifiedTime", weightRecord.metadata.lastModifiedTime.toString())
+                            put("clientRecordId", weightRecord.metadata.clientRecordId ?: "")
+                            put("dataOrigin", weightRecord.metadata.dataOrigin.packageName)
+                        })
+                    }
+                    
+                    call.resolve(result)
+                    
+                } catch (e: Exception) {
+                    call.reject("Error reading weight data: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            call.reject(e.message)
+        }
+    }
+    
+    @PluginMethod
+    fun queryBodyTemperature(call: PluginCall) {
+        try {
+            if (!hasPermission(CapHealthPermission.READ_BODY_TEMPERATURE)) {
+                call.reject("Temperature permission not granted")
+                return
+            }
+            
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    // Create a request to read body temperature records
+                    val request = ReadRecordsRequest(
+                        recordType = BodyTemperatureRecord::class,
+                        timeRangeFilter = TimeRangeFilter.latest(),
+                        ascendingOrder = false,
+                        limit = 1
+                    )
+                    
+                    val response = healthConnectClient.readRecords(request)
+                    
+                    if (response.records.isEmpty()) {
+                        call.resolve(JSObject().apply {
+                            put("temperature", null)
+                            put("timestamp", null)
+                        })
+                        return@launch
+                    }
+                    
+                    val temperatureRecord = response.records.first()
+                    val result = JSObject().apply {
+                        put("temperature", temperatureRecord.temperature.inCelsius)
+                        put("timestamp", temperatureRecord.time.toString())
+                        put("metadata", JSObject().apply {
+                            put("id", temperatureRecord.metadata.id)
+                            put("lastModifiedTime", temperatureRecord.metadata.lastModifiedTime.toString())
+                            put("clientRecordId", temperatureRecord.metadata.clientRecordId ?: "")
+                            put("dataOrigin", temperatureRecord.metadata.dataOrigin.packageName)
+                        })
+                    }
+                    
+                    call.resolve(result)
+                    
+                } catch (e: Exception) {
+                    call.reject("Error reading temperature data: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            call.reject(e.message)
+        }
+    }
 
 }

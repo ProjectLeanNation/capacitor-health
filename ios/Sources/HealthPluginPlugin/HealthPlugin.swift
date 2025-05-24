@@ -17,7 +17,10 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "openAppleHealthSettings", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "queryAggregated", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "queryWorkouts", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "querySleepData", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "querySleepData", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "queryHeight", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "queryWeight", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "queryBodyTemperature", returnType: CAPPluginReturnPromise)
     ]
     
     let healthStore = HKHealthStore()
@@ -75,12 +78,14 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
             return [HKObjectType.quantityType(forIdentifier: .stepCount)].compactMap{$0}
         case "READ_ACTIVE_CALORIES":
             return [HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)].compactMap{$0}
+        case "READ_TOTAL_CALORIES":
+            return [HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)].compactMap{$0}
         case "READ_WORKOUTS":
             return [HKObjectType.workoutType()].compactMap{$0}
         case "READ_HEART_RATE":
-            return  [HKObjectType.quantityType(forIdentifier: .heartRate)].compactMap{$0}
+            return [HKObjectType.quantityType(forIdentifier: .heartRate)].compactMap{$0}
         case "READ_ROUTE":
-            return  [HKSeriesType.workoutRoute()].compactMap{$0}
+            return [HKSeriesType.workoutRoute()].compactMap{$0}
         case "READ_DISTANCE":
             return [
                 HKObjectType.quantityType(forIdentifier: .distanceCycling),
@@ -93,6 +98,18 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
         case "READ_SLEEP":
             return [
                 HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
+            ].compactMap{$0}
+        case "READ_HEIGHT":
+            return [
+                HKObjectType.quantityType(forIdentifier: .height)!
+            ].compactMap{$0}
+        case "READ_WEIGHT":
+            return [
+                HKObjectType.quantityType(forIdentifier: .bodyMass)!
+            ].compactMap{$0}
+        case "READ_TEMPERATURE":
+            return [
+                HKObjectType.quantityType(forIdentifier: .bodyTemperature)!
             ].compactMap{$0}
         default:
             return []
@@ -668,6 +685,195 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
         5: "DEEP",
         6: "REM"
     ]
+    
+    @objc func queryHeight(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            call.reject("Health data is not available on this device")
+            return
+        }
+        
+        requestAuthorization { (success, error) in
+            if let error = error {
+                call.reject("Failed to get authorization: \(error.localizedDescription)")
+                return
+            }
+            
+            guard success else {
+                call.reject("Authorization failed")
+                return
+            }
+            
+            self.handleQueryHeight(call)
+        }
+    }
+    
+    @objc func queryWeight(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            call.reject("Health data is not available on this device")
+            return
+        }
+        
+        requestAuthorization { (success, error) in
+            if let error = error {
+                call.reject("Failed to get authorization: \(error.localizedDescription)")
+                return
+            }
+            
+            guard success else {
+                call.reject("Authorization failed")
+                return
+            }
+            
+            self.handleQueryWeight(call)
+        }
+    }
+    
+    func handleQueryHeight(_ call: CAPPluginCall) {
+        guard let heightType = HKObjectType.quantityType(forIdentifier: .height) else {
+            call.reject("Height type is not available")
+            return
+        }
+        
+        let query = HKSampleQuery(sampleType: heightType, predicate: nil, limit: 1, sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]) { (query, samples, error) in
+            if let error = error {
+                call.reject("Error querying height: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let heightSample = samples?.first as? HKQuantitySample else {
+                // No height data available
+                call.resolve([
+                    "height": nil,
+                    "timestamp": nil
+                ])
+                return
+            }
+            
+            // Height is stored in meters in HealthKit
+            let heightValue = heightSample.quantity.doubleValue(for: HKUnit.meter())
+            let dateFormatter = ISO8601DateFormatter()
+            
+            let result: [String: Any] = [
+                "height": heightValue,
+                "timestamp": dateFormatter.string(from: heightSample.startDate),
+                "metadata": [
+                    "id": heightSample.uuid.uuidString,
+                    "lastModifiedTime": dateFormatter.string(from: heightSample.endDate),
+                    "clientRecordId": heightSample.metadata?["clientRecordId"] as? String ?? "",
+                    "dataOrigin": heightSample.sourceRevision.source.bundleIdentifier
+                ]
+            ]
+            
+            call.resolve(result)
+        }
+        
+        healthStore.execute(query)
+    }
+    
+    func handleQueryWeight(_ call: CAPPluginCall) {
+        guard let weightType = HKObjectType.quantityType(forIdentifier: .bodyMass) else {
+            call.reject("Weight type is not available")
+            return
+        }
+        
+        let query = HKSampleQuery(sampleType: weightType, predicate: nil, limit: 1, sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]) { (query, samples, error) in
+            if let error = error {
+                call.reject("Error querying weight: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let weightSample = samples?.first as? HKQuantitySample else {
+                // No weight data available
+                call.resolve([
+                    "weight": nil,
+                    "timestamp": nil
+                ])
+                return
+            }
+            
+            // Weight is stored in kilograms in HealthKit
+            let weightValue = weightSample.quantity.doubleValue(for: HKUnit.gramUnit(with: .kilo))
+            let dateFormatter = ISO8601DateFormatter()
+            
+            let result: [String: Any] = [
+                "weight": weightValue,
+                "timestamp": dateFormatter.string(from: weightSample.startDate),
+                "metadata": [
+                    "id": weightSample.uuid.uuidString,
+                    "lastModifiedTime": dateFormatter.string(from: weightSample.endDate),
+                    "clientRecordId": weightSample.metadata?["clientRecordId"] as? String ?? "",
+                    "dataOrigin": weightSample.sourceRevision.source.bundleIdentifier
+                ]
+            ]
+            
+            call.resolve(result)
+        }
+        
+        healthStore.execute(query)
+    }
+    
+    @objc func queryBodyTemperature(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            call.reject("Health data is not available on this device")
+            return
+        }
+        
+        requestAuthorization { (success, error) in
+            if let error = error {
+                call.reject("Failed to get authorization: \(error.localizedDescription)")
+                return
+            }
+            
+            guard success else {
+                call.reject("Authorization failed")
+                return
+            }
+            
+            self.handleQueryBodyTemperature(call)
+        }
+    }
+    
+    func handleQueryBodyTemperature(_ call: CAPPluginCall) {
+        guard let temperatureType = HKObjectType.quantityType(forIdentifier: .bodyTemperature) else {
+            call.reject("Body temperature type is not available")
+            return
+        }
+        
+        let query = HKSampleQuery(sampleType: temperatureType, predicate: nil, limit: 1, sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]) { (query, samples, error) in
+            if let error = error {
+                call.reject("Error querying temperature: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let temperatureSample = samples?.first as? HKQuantitySample else {
+                // No temperature data available
+                call.resolve([
+                    "temperature": nil,
+                    "timestamp": nil
+                ])
+                return
+            }
+            
+            // Temperature is stored in celsius in HealthKit
+            let temperatureValue = temperatureSample.quantity.doubleValue(for: HKUnit.degreeCelsius())
+            let dateFormatter = ISO8601DateFormatter()
+            
+            let result: [String: Any] = [
+                "temperature": temperatureValue,
+                "timestamp": dateFormatter.string(from: temperatureSample.startDate),
+                "metadata": [
+                    "id": temperatureSample.uuid.uuidString,
+                    "lastModifiedTime": dateFormatter.string(from: temperatureSample.endDate),
+                    "clientRecordId": temperatureSample.metadata?["clientRecordId"] as? String ?? "",
+                    "dataOrigin": temperatureSample.sourceRevision.source.bundleIdentifier
+                ]
+            ]
+            
+            call.resolve(result)
+        }
+        
+        healthStore.execute(query)
+    }
     
     let workoutTypeMapping: [UInt : String] =  [
         1 : "americanFootball" ,

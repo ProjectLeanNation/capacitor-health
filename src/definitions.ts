@@ -55,12 +55,29 @@ export interface HealthPlugin {
    * @param request
    */
   queryWorkouts(request: QueryWorkoutRequest): Promise<QueryWorkoutResponse>;
-  
+
   /**
    * Query sleep data
    * @param request
    */
   querySleepData(request: QuerySleepRequest): Promise<QuerySleepResponse>;
+
+  /**
+   * Query height data
+   */
+  queryHeight(): Promise<HeightData>;
+
+  /**
+   * Query weight data
+   */
+  queryWeight(): Promise<WeightData>;
+
+  /**
+   * Query body temperature data
+   * @returns Body temperature data
+   * @since 0.0.1
+   */
+  queryBodyTemperature(): Promise<BodyTemperatureData>;
 }
 
 export declare type HealthPermission =
@@ -168,5 +185,47 @@ export interface SleepSession {
 }
 
 export interface QuerySleepResponse {
-  sleepSessions: SleepSession[];
+  sessions: SleepSession[];
+}
+
+export interface HeightData {
+  height: number | null; // Height in meters
+  timestamp: string | null;
+  metadata?: {
+    id: string;
+    lastModifiedTime: string;
+    clientRecordId: string;
+    dataOrigin: string;
+  };
+}
+
+export interface WeightData {
+  weight: number | null; // Weight in kilograms
+  timestamp: string | null;
+  metadata?: {
+    id: string;
+    lastModifiedTime: string;
+    clientRecordId: string;
+    dataOrigin: string;
+  };
+}
+
+export interface BodyTemperatureData {
+  /**
+   * Body temperature value in celsius
+   */
+  temperature: number;
+  /**
+   * ISO8601 timestamp
+   */
+  timestamp: string;
+  /**
+   * Metadata about the measurement
+   */
+  metadata: {
+    id: string;
+    lastModifiedTime: string;
+    clientRecordId: string;
+    dataOrigin: string;
+  };
 }
