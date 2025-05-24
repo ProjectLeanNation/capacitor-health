@@ -55,8 +55,22 @@ export interface HealthPlugin {
      * @param request
      */
     querySleepData(request: QuerySleepRequest): Promise<QuerySleepResponse>;
+    /**
+     * Query height data
+     */
+    queryHeight(): Promise<HeightData>;
+    /**
+     * Query weight data
+     */
+    queryWeight(): Promise<WeightData>;
+    /**
+     * Query body temperature data
+     * @returns Body temperature data
+     * @since 0.0.1
+     */
+    queryBodyTemperature(): Promise<BodyTemperatureData>;
 }
-export declare type HealthPermission = 'READ_STEPS' | 'READ_WORKOUTS' | 'READ_ACTIVE_CALORIES' | 'READ_TOTAL_CALORIES' | 'READ_DISTANCE' | 'READ_HEART_RATE' | 'READ_ROUTE' | 'READ_MINDFULNESS' | 'READ_SLEEP';
+export declare type HealthPermission = 'READ_STEPS' | 'READ_WORKOUTS' | 'READ_ACTIVE_CALORIES' | 'READ_TOTAL_CALORIES' | 'READ_DISTANCE' | 'READ_HEART_RATE' | 'READ_ROUTE' | 'READ_MINDFULNESS' | 'READ_SLEEP' | 'READ_BODY_TEMPERATURE' | 'READ_HEIGHT' | 'READ_WEIGHT';
 export interface PermissionsRequest {
     permissions: HealthPermission[];
 }
@@ -140,5 +154,44 @@ export interface SleepSession {
     awakeTime?: number;
 }
 export interface QuerySleepResponse {
-    sleepSessions: SleepSession[];
+    sessions: SleepSession[];
+}
+export interface HeightData {
+    height: number | null;
+    timestamp: string | null;
+    metadata?: {
+        id: string;
+        lastModifiedTime: string;
+        clientRecordId: string;
+        dataOrigin: string;
+    };
+}
+export interface WeightData {
+    weight: number | null;
+    timestamp: string | null;
+    metadata?: {
+        id: string;
+        lastModifiedTime: string;
+        clientRecordId: string;
+        dataOrigin: string;
+    };
+}
+export interface BodyTemperatureData {
+    /**
+     * Body temperature value in celsius
+     */
+    temperature: number;
+    /**
+     * ISO8601 timestamp
+     */
+    timestamp: string;
+    /**
+     * Metadata about the measurement
+     */
+    metadata: {
+        id: string;
+        lastModifiedTime: string;
+        clientRecordId: string;
+        dataOrigin: string;
+    };
 }
