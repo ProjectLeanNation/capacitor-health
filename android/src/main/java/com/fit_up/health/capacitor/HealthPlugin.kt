@@ -723,13 +723,13 @@ class HealthPlugin : Plugin() {
     @PluginMethod
     fun queryHeight(call: PluginCall) {
         try {
-            if (!hasPermission(CapHealthPermission.READ_HEIGHT)) {
-                call.reject("Height permission not granted")
-                return
-            }
-            
             CoroutineScope(Dispatchers.IO).launch {
                 try {
+                    if (!hasPermission(CapHealthPermission.READ_HEIGHT)) {
+                        call.reject("Height permission not granted")
+                        return@launch
+                    }
+                    
                     // Create a request to read height records
                     val request = ReadRecordsRequest(
                         recordType = HeightRecord::class,
@@ -774,13 +774,13 @@ class HealthPlugin : Plugin() {
     @PluginMethod
     fun queryWeight(call: PluginCall) {
         try {
-            if (!hasPermission(CapHealthPermission.READ_WEIGHT)) {
-                call.reject("Weight permission not granted")
-                return
-            }
-            
             CoroutineScope(Dispatchers.IO).launch {
                 try {
+                    if (!hasPermission(CapHealthPermission.READ_WEIGHT)) {
+                        call.reject("Weight permission not granted")
+                        return@launch
+                    }
+                    
                     // Create a request to read weight records
                     val request = ReadRecordsRequest(
                         recordType = WeightRecord::class,
@@ -825,13 +825,13 @@ class HealthPlugin : Plugin() {
     @PluginMethod
     fun queryBodyTemperature(call: PluginCall) {
         try {
-            if (!hasPermission(CapHealthPermission.READ_BODY_TEMPERATURE)) {
-                call.reject("Temperature permission not granted")
-                return
-            }
-            
             CoroutineScope(Dispatchers.IO).launch {
                 try {
+                    if (!hasPermission(CapHealthPermission.READ_BODY_TEMPERATURE)) {
+                        call.reject("Body temperature permission not granted")
+                        return@launch
+                    }
+                    
                     // Create a request to read body temperature records
                     val request = ReadRecordsRequest(
                         recordType = BodyTemperatureRecord::class,
