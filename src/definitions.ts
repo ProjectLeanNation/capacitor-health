@@ -55,6 +55,12 @@ export interface HealthPlugin {
    * @param request
    */
   queryWorkouts(request: QueryWorkoutRequest): Promise<QueryWorkoutResponse>;
+  
+  /**
+   * Query sleep data
+   * @param request
+   */
+  querySleepData(request: QuerySleepRequest): Promise<QuerySleepResponse>;
 }
 
 export declare type HealthPermission =
@@ -65,7 +71,8 @@ export declare type HealthPermission =
   | 'READ_DISTANCE'
   | 'READ_HEART_RATE'
   | 'READ_ROUTE'
-  | 'READ_MINDFULNESS';
+  | 'READ_MINDFULNESS'
+  | 'READ_SLEEP';
 
 export interface PermissionsRequest {
   permissions: HealthPermission[];
@@ -129,4 +136,37 @@ export interface AggregatedSample {
   startDate: string;
   endDate: string;
   value: number;
+}
+
+export interface QuerySleepRequest {
+  startDate: string;
+  endDate: string;
+}
+
+export interface SleepStage {
+  startDate: string;
+  endDate: string;
+  stage: string;
+  duration: number;
+}
+
+export interface SleepSession {
+  id: string;
+  startDate: string;
+  endDate: string;
+  sourceName: string;
+  sourceBundleId: string;
+  title: string;
+  duration: number;
+  stages?: SleepStage[];
+  timeInBed?: number;
+  sleepTime?: number;
+  deepSleepTime?: number;
+  remSleepTime?: number;
+  lightSleepTime?: number;
+  awakeTime?: number;
+}
+
+export interface QuerySleepResponse {
+  sleepSessions: SleepSession[];
 }

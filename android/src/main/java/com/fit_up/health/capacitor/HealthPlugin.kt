@@ -16,6 +16,7 @@ import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseRouteResult
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
@@ -41,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.jvm.optionals.getOrDefault
 
 enum class CapHealthPermission {
-    READ_STEPS, READ_WORKOUTS, READ_HEART_RATE, READ_ROUTE, READ_ACTIVE_CALORIES, READ_TOTAL_CALORIES, READ_DISTANCE;
+    READ_STEPS, READ_WORKOUTS, READ_HEART_RATE, READ_ROUTE, READ_ACTIVE_CALORIES, READ_TOTAL_CALORIES, READ_DISTANCE, READ_SLEEP;
 
     companion object {
         fun from(s: String): CapHealthPermission? {
@@ -85,6 +86,10 @@ enum class CapHealthPermission {
         Permission(
             alias = "READ_ROUTE",
             strings = ["android.permission.health.READ_EXERCISE_ROUTE"]
+        ),
+        Permission(
+            alias = "READ_SLEEP",
+            strings = ["android.permission.health.READ_SLEEP"]
         )
     ]
 )
@@ -141,7 +146,8 @@ class HealthPlugin : Plugin() {
         Pair(CapHealthPermission.READ_ACTIVE_CALORIES, "android.permission.health.READ_ACTIVE_CALORIES_BURNED"),
         Pair(CapHealthPermission.READ_TOTAL_CALORIES, "android.permission.health.READ_TOTAL_CALORIES_BURNED"),
         Pair(CapHealthPermission.READ_DISTANCE, "android.permission.health.READ_DISTANCE"),
-        Pair(CapHealthPermission.READ_STEPS, "android.permission.health.READ_STEPS")
+        Pair(CapHealthPermission.READ_STEPS, "android.permission.health.READ_STEPS"),
+        Pair(CapHealthPermission.READ_SLEEP, "android.permission.health.READ_SLEEP")
     )
 
     // Check if a set of permissions are granted
@@ -507,6 +513,120 @@ class HealthPlugin : Plugin() {
         }
         return routeArray
     }
+    
+    @PluginMethod
+    fun querySleepData(call: PluginCall) {
+        val startDate = call.getString("startDate")
+        val endDate = call.getString("endDate")
+        
+        if (startDate == null || endDate == null) {
+            call.reject("Missing required parameters: startDate or endDate")
+            return
+        }
+        
+        val startDateTime = Instant.parse(startDate).atZone(ZoneId.systemDefault()).toLocalDateTime()
+        val endDateTime = Instant.parse(endDate).atZone(ZoneId.systemDefault()).toLocalDateTime()
+        
+        val timeRange = TimeRangeFilter.between(startDateTime, endDateTime)
+        val request = ReadRecordsRequest(SleepSessionRecord::class, timeRange, emptySet(), true, 1000)
+        
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                if (!hasPermission(CapHealthPermission.READ_SLEEP)) {
+                    call.reject("Sleep permission not granted")
+                    return@launch
+                }
+                
+                // Query sleep sessions
+                val response = healthConnectClient.readRecords(request)
+                
+                val sleepArray = JSArray()
+                
+                for (sleepSession in response.records) {
+                    val sleepObject = JSObject()
+                    sleepObject.put("id", sleepSession.metadata.id)
+                    sleepObject.put(
+                        "sourceName",
+                        Optional.ofNullable(sleepSession.metadata.device?.model).getOrDefault("") +
+                                Optional.ofNullable(sleepSession.metadata.device?.model).getOrDefault("")
+                    )
+                    sleepObject.put("sourceBundleId", sleepSession.metadata.dataOrigin.packageName)
+                    sleepObject.put("startDate", sleepSession.startTime.toString())
+                    sleepObject.put("endDate", sleepSession.endTime.toString())
+                    sleepObject.put("title", sleepSession.title)
+                    
+                    // Calculate total duration in seconds
+                    val duration = sleepSession.endTime.epochSecond - sleepSession.startTime.epochSecond
+                    sleepObject.put("duration", duration)
+                    
+                    // Process sleep stages if available
+                    if (sleepSession.stages.isNotEmpty()) {
+                        val stagesArray = JSArray()
+                        
+                        for (stage in sleepSession.stages) {
+                            val stageObject = JSObject()
+                            stageObject.put("startDate", stage.startTime.toString())
+                            stageObject.put("endDate", stage.endTime.toString())
+                            stageObject.put("stage", sleepStageMapping.getOrDefault(stage.stage, "UNKNOWN"))
+                            
+                            // Calculate stage duration in seconds
+                            val stageDuration = stage.endTime.epochSecond - stage.startTime.epochSecond
+                            stageObject.put("duration", stageDuration)
+                            
+                            stagesArray.put(stageObject)
+                        }
+                        
+                        sleepObject.put("stages", stagesArray)
+                    }
+                    
+                    // Calculate sleep metrics
+                    if (sleepSession.stages.isNotEmpty()) {
+                        // Time in bed = total sleep session duration
+                        sleepObject.put("timeInBed", duration)
+                        
+                        // Calculate actual sleep time (excluding AWAKE and OUT_OF_BED stages)
+                        val sleepTime = sleepSession.stages
+                            .filter { it.stage != 1 && it.stage != 3 } // Filter out AWAKE and OUT_OF_BED
+                            .sumOf { it.endTime.epochSecond - it.startTime.epochSecond }
+                        sleepObject.put("sleepTime", sleepTime)
+                        
+                        // Deep sleep time
+                        val deepSleepTime = sleepSession.stages
+                            .filter { it.stage == 5 } // DEEP sleep
+                            .sumOf { it.endTime.epochSecond - it.startTime.epochSecond }
+                        sleepObject.put("deepSleepTime", deepSleepTime)
+                        
+                        // REM sleep time
+                        val remSleepTime = sleepSession.stages
+                            .filter { it.stage == 6 } // REM sleep
+                            .sumOf { it.endTime.epochSecond - it.startTime.epochSecond }
+                        sleepObject.put("remSleepTime", remSleepTime)
+                        
+                        // Light sleep time
+                        val lightSleepTime = sleepSession.stages
+                            .filter { it.stage == 4 } // LIGHT sleep
+                            .sumOf { it.endTime.epochSecond - it.startTime.epochSecond }
+                        sleepObject.put("lightSleepTime", lightSleepTime)
+                        
+                        // Awake time during sleep session
+                        val awakeTime = sleepSession.stages
+                            .filter { it.stage == 1 } // AWAKE
+                            .sumOf { it.endTime.epochSecond - it.startTime.epochSecond }
+                        sleepObject.put("awakeTime", awakeTime)
+                    }
+                    
+                    sleepArray.put(sleepObject)
+                }
+                
+                val result = JSObject()
+                result.put("sleepSessions", sleepArray)
+                call.resolve(result)
+                
+            } catch (e: Exception) {
+                call.reject("Error querying sleep data: ${e.message}")
+            }
+        }
+    }
 
 
     private val exerciseTypeMapping = mapOf(
@@ -571,6 +691,17 @@ class HealthPlugin : Plugin() {
         81 to "WEIGHTLIFTING",
         82 to "WHEELCHAIR",
         83 to "YOGA"
+    )
+    
+    // Sleep stage mapping based on Health Connect's SleepSessionRecord.Stage constants
+    private val sleepStageMapping = mapOf(
+        0 to "UNKNOWN",
+        1 to "AWAKE",
+        2 to "SLEEPING",
+        3 to "OUT_OF_BED",
+        4 to "LIGHT",
+        5 to "DEEP",
+        6 to "REM"
     )
 
 }

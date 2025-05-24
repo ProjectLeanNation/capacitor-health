@@ -16,7 +16,8 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "requestHealthPermissions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "openAppleHealthSettings", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "queryAggregated", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "queryWorkouts", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "queryWorkouts", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "querySleepData", returnType: CAPPluginReturnPromise)
     ]
     
     let healthStore = HKHealthStore()
@@ -89,6 +90,10 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
             ].compactMap{$0}
         case "READ_MINDFULNESS":
             return [HKObjectType.categoryType(forIdentifier: .mindfulSession)!].compactMap{$0}
+        case "READ_SLEEP":
+            return [
+                HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
+            ].compactMap{$0}
         default:
             return []
         }
@@ -477,6 +482,192 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
         healthStore.execute(locationQuery)
     }
     
+    @objc func querySleepData(_ call: CAPPluginCall) {
+        guard let startDateString = call.getString("startDate"),
+              let endDateString = call.getString("endDate"),
+              let startDate = self.isoDateFormatter.date(from: startDateString),
+              let endDate = self.isoDateFormatter.date(from: endDateString) else {
+            call.reject("Missing required parameters: startDate or endDate")
+            return
+        }
+        
+        // Get sleep analysis type
+        guard let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
+            call.reject("Sleep analysis not available on this device")
+            return
+        }
+        
+        // Check for sleep permission
+        healthStore.getRequestStatusForAuthorization(toShare: [], read: [sleepType]) { status, error in
+            if status != .unnecessary {  // If not already authorized
+                call.reject("Sleep permission not granted")
+                return
+            }
+            
+            // Create predicate for sleep samples
+            let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+            
+            // Create the sleep query
+            let sleepQuery = HKSampleQuery(sampleType: sleepType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]) { _, samples, error in
+                
+                if let error = error {
+                    call.reject("Error querying sleep data: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let sleepSamples = samples as? [HKCategorySample] else {
+                    call.resolve(["sleepSessions": []])
+                    return
+                }
+                
+                // Group samples by source and date to create sleep sessions
+                let calendar = Calendar.current
+                var sleepSessionsMap: [String: [HKCategorySample]] = [:]
+                
+                for sample in sleepSamples {
+                    // Create a unique key for each potential sleep session based on source and night
+                    let startDay = calendar.startOfDay(for: sample.startDate)
+                    let sourceId = sample.sourceRevision.source.bundleIdentifier
+                    let sessionKey = "\(sourceId)-\(Int(startDay.timeIntervalSince1970))"
+                    
+                    if sleepSessionsMap[sessionKey] != nil {
+                        sleepSessionsMap[sessionKey]?.append(sample)
+                    } else {
+                        sleepSessionsMap[sessionKey] = [sample]
+                    }
+                }
+                
+                // Process each sleep session
+                var sleepSessionsArray: [[String: Any]] = []
+                
+                for (_, samples) in sleepSessionsMap {
+                    // Skip if less than 2 samples (need at least one sleep stage)
+                    if samples.count < 1 {
+                        continue
+                    }
+                    
+                    // Sort samples by start date
+                    let sortedSamples = samples.sorted { $0.startDate < $1.startDate }
+                    
+                    // Find the earliest start and latest end
+                    guard let firstSample = sortedSamples.first,
+                          let lastSample = sortedSamples.last else {
+                        continue
+                    }
+                    
+                    let sessionStartDate = firstSample.startDate
+                    let sessionEndDate = lastSample.endDate
+                    
+                    // Create sleep session dictionary
+                    var sleepSession: [String: Any] = [
+                        "id": UUID().uuidString,  // Generate a unique ID
+                        "sourceName": firstSample.sourceRevision.source.name,
+                        "sourceBundleId": firstSample.sourceRevision.source.bundleIdentifier,
+                        "startDate": sessionStartDate,
+                        "endDate": sessionEndDate,
+                        "title": "Sleep",  // Default title
+                        "duration": sessionEndDate.timeIntervalSince(sessionStartDate)
+                    ]
+                    
+                    // Process sleep stages
+                    var stagesArray: [[String: Any]] = []
+                    var timeInBed: TimeInterval = 0
+                    var sleepTime: TimeInterval = 0
+                    var deepSleepTime: TimeInterval = 0
+                    var remSleepTime: TimeInterval = 0
+                    var lightSleepTime: TimeInterval = 0
+                    var awakeTime: TimeInterval = 0
+                    
+                    for sample in sortedSamples {
+                        let stageDuration = sample.endDate.timeIntervalSince(sample.startDate)
+                        timeInBed += stageDuration
+                        
+                        // Map Apple's sleep stages to our format
+                        // HKCategoryValueSleepAnalysis: 0=InBed, 1=Asleep, 2=Awake, 3=Core, 4=Deep, 5=REM
+                        var stageValue = "UNKNOWN"
+                        var isAwake = false
+                        
+                        switch sample.value {
+                        case HKCategoryValueSleepAnalysis.inBed.rawValue:
+                            stageValue = "OUT_OF_BED"
+                            isAwake = true
+                            awakeTime += stageDuration
+                        case HKCategoryValueSleepAnalysis.awake.rawValue:
+                            stageValue = "AWAKE"
+                            isAwake = true
+                            awakeTime += stageDuration
+                        case HKCategoryValueSleepAnalysis.asleep.rawValue:
+                            stageValue = "SLEEPING"
+                            sleepTime += stageDuration
+                            lightSleepTime += stageDuration  // Default to light sleep if not specified
+                        case HKCategoryValueSleepAnalysis.core.rawValue:
+                            stageValue = "LIGHT"
+                            sleepTime += stageDuration
+                            lightSleepTime += stageDuration
+                        case HKCategoryValueSleepAnalysis.deep.rawValue:
+                            stageValue = "DEEP"
+                            sleepTime += stageDuration
+                            deepSleepTime += stageDuration
+                        case HKCategoryValueSleepAnalysis.rem.rawValue:
+                            stageValue = "REM"
+                            sleepTime += stageDuration
+                            remSleepTime += stageDuration
+                        default:
+                            stageValue = "UNKNOWN"
+                            if !isAwake {
+                                sleepTime += stageDuration
+                                lightSleepTime += stageDuration
+                            }
+                        }
+                        
+                        let stageDict: [String: Any] = [
+                            "startDate": sample.startDate,
+                            "endDate": sample.endDate,
+                            "stage": stageValue,
+                            "duration": stageDuration
+                        ]
+                        
+                        stagesArray.append(stageDict)
+                    }
+                    
+                    // Add sleep metrics to session
+                    sleepSession["stages"] = stagesArray
+                    sleepSession["timeInBed"] = timeInBed
+                    sleepSession["sleepTime"] = sleepTime
+                    sleepSession["deepSleepTime"] = deepSleepTime
+                    sleepSession["remSleepTime"] = remSleepTime
+                    sleepSession["lightSleepTime"] = lightSleepTime
+                    sleepSession["awakeTime"] = awakeTime
+                    
+                    sleepSessionsArray.append(sleepSession)
+                }
+                
+                // Sort sleep sessions by start date
+                sleepSessionsArray.sort { 
+                    guard let date1 = $0["startDate"] as? Date,
+                          let date2 = $1["startDate"] as? Date else {
+                        return false
+                    }
+                    return date1 < date2
+                }
+                
+                call.resolve(["sleepSessions": sleepSessionsArray])
+            }
+            
+            self.healthStore.execute(sleepQuery)
+        }
+    }
+    
+    // Sleep stage mapping to match Android implementation
+    let sleepStageMapping: [Int: String] = [
+        0: "UNKNOWN",
+        1: "AWAKE",
+        2: "SLEEPING",
+        3: "OUT_OF_BED",
+        4: "LIGHT",
+        5: "DEEP",
+        6: "REM"
+    ]
     
     let workoutTypeMapping: [UInt : String] =  [
         1 : "americanFootball" ,
