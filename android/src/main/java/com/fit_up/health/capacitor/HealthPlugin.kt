@@ -16,6 +16,7 @@ import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseRouteResult
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.BodyTemperatureRecord
 import androidx.health.connect.client.records.HeightRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
