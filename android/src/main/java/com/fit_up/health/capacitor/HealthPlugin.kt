@@ -736,7 +736,7 @@ class HealthPlugin : Plugin() {
                         recordType = HeightRecord::class,
                         timeRangeFilter = TimeRangeFilter.between(Instant.EPOCH, Instant.now()),
                         ascendingOrder = false,
-                        limit = 1
+                        pageSize = 1
                     )
                     
                     val response = healthConnectClient.readRecords(request)
@@ -787,7 +787,7 @@ class HealthPlugin : Plugin() {
                         recordType = WeightRecord::class,
                         timeRangeFilter = TimeRangeFilter.between(Instant.EPOCH, Instant.now()),
                         ascendingOrder = false,
-                        limit = 1
+                        pageSize = 1
                     )
                     
                     val response = healthConnectClient.readRecords(request)
@@ -838,7 +838,7 @@ class HealthPlugin : Plugin() {
                         recordType = BodyTemperatureRecord::class,
                         timeRangeFilter = TimeRangeFilter.between(Instant.EPOCH, Instant.now()),
                         ascendingOrder = false,
-                        limit = 1
+                        pageSize = 1
                     )
                     
                     val response = healthConnectClient.readRecords(request)
