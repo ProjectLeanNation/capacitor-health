@@ -89,7 +89,10 @@ export declare type HealthPermission =
   | 'READ_HEART_RATE'
   | 'READ_ROUTE'
   | 'READ_MINDFULNESS'
-  | 'READ_SLEEP';
+  | 'READ_SLEEP'
+  | 'READ_BODY_TEMPERATURE'
+  | 'READ_HEIGHT'
+  | 'READ_WEIGHT';
 
 export interface PermissionsRequest {
   permissions: HealthPermission[];
