@@ -39,6 +39,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.Period
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.Optional
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.jvm.optionals.getOrDefault
@@ -733,7 +734,7 @@ class HealthPlugin : Plugin() {
                     // Create a request to read height records
                     val request = ReadRecordsRequest(
                         recordType = HeightRecord::class,
-                        timeRangeFilter = TimeRangeFilter.latest(),
+                        timeRangeFilter = TimeRangeFilter.between(Instant.EPOCH, Instant.now()),
                         ascendingOrder = false,
                         limit = 1
                     )
@@ -784,7 +785,7 @@ class HealthPlugin : Plugin() {
                     // Create a request to read weight records
                     val request = ReadRecordsRequest(
                         recordType = WeightRecord::class,
-                        timeRangeFilter = TimeRangeFilter.latest(),
+                        timeRangeFilter = TimeRangeFilter.between(Instant.EPOCH, Instant.now()),
                         ascendingOrder = false,
                         limit = 1
                     )
@@ -835,7 +836,7 @@ class HealthPlugin : Plugin() {
                     // Create a request to read body temperature records
                     val request = ReadRecordsRequest(
                         recordType = BodyTemperatureRecord::class,
-                        timeRangeFilter = TimeRangeFilter.latest(),
+                        timeRangeFilter = TimeRangeFilter.between(Instant.EPOCH, Instant.now()),
                         ascendingOrder = false,
                         limit = 1
                     )
