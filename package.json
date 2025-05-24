@@ -1,5 +1,5 @@
 {
-  "name": "@projectleannation/capacitor-health",
+  "name": "capacitor-health",
   "version": "0.0.12",
   "description": "Capacitor plugin for Apple Health and Google Health Connect",
   "main": "dist/plugin.cjs.js",
@@ -15,7 +15,7 @@
     "Package.swift",
     "CapacitorHealth.podspec"
   ],
-  "author": "Project Leannation Franchising",
+  "author": "Martin",
   "license": "MIT",
   "repository": {
     "type": "git",
