@@ -154,7 +154,7 @@ export interface SleepSession {
     awakeTime?: number;
 }
 export interface QuerySleepResponse {
-    sessions: SleepSession[];
+    sleepSessions: SleepSession[];
 }
 export interface HeightData {
     height: number | null;

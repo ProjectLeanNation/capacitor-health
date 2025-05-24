@@ -188,7 +188,7 @@ export interface SleepSession {
 }
 
 export interface QuerySleepResponse {
-  sessions: SleepSession[];
+  sleepSessions: SleepSession[];
 }
 
 export interface HeightData {
