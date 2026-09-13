@@ -12,12 +12,14 @@ import androidx.health.connect.client.aggregate.AggregateMetric
 import androidx.health.connect.client.aggregate.AggregationResult
 import androidx.health.connect.client.aggregate.AggregationResultGroupedByPeriod
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseRouteResult
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.BodyTemperatureRecord
 import androidx.health.connect.client.records.HeightRecord
+import androidx.health.connect.client.records.LeanBodyMassRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
@@ -46,7 +48,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.jvm.optionals.getOrDefault
 
 enum class CapHealthPermission {
-    READ_STEPS, READ_WORKOUTS, READ_HEART_RATE, READ_ROUTE, READ_ACTIVE_CALORIES, READ_TOTAL_CALORIES, READ_DISTANCE, READ_SLEEP, READ_HEIGHT, READ_WEIGHT, READ_BODY_TEMPERATURE;
+    READ_STEPS, READ_WORKOUTS, READ_HEART_RATE, READ_ROUTE, READ_ACTIVE_CALORIES, READ_TOTAL_CALORIES, READ_DISTANCE, READ_SLEEP, READ_HEIGHT, READ_WEIGHT, READ_BODY_TEMPERATURE, READ_BODY_FAT_PERCENTAGE, READ_LEAN_BODY_MASS;
 
     companion object {
         fun from(s: String): CapHealthPermission? {
@@ -106,6 +108,14 @@ enum class CapHealthPermission {
         Permission(
             alias = "READ_BODY_TEMPERATURE",
             strings = ["android.permission.health.READ_BODY_TEMPERATURE"]
+        ),
+        Permission(
+            alias = "READ_BODY_FAT_PERCENTAGE",
+            strings = ["android.permission.health.READ_BODY_FAT"]
+        ),
+        Permission(
+            alias = "READ_LEAN_BODY_MASS",
+            strings = ["android.permission.health.READ_LEAN_BODY_MASS"]
         )
     ]
 )
@@ -165,7 +175,9 @@ class HealthPlugin : Plugin() {
         Pair(CapHealthPermission.READ_STEPS, "android.permission.health.READ_STEPS"),
         Pair(CapHealthPermission.READ_SLEEP, "android.permission.health.READ_SLEEP"),
         Pair(CapHealthPermission.READ_HEIGHT, "android.permission.health.READ_HEIGHT"),
-        Pair(CapHealthPermission.READ_WEIGHT, "android.permission.health.READ_WEIGHT")
+        Pair(CapHealthPermission.READ_WEIGHT, "android.permission.health.READ_WEIGHT"),
+        Pair(CapHealthPermission.READ_BODY_FAT_PERCENTAGE, "android.permission.health.READ_BODY_FAT"),
+        Pair(CapHealthPermission.READ_LEAN_BODY_MASS, "android.permission.health.READ_LEAN_BODY_MASS")
     )
 
     // Check if a set of permissions are granted
@@ -817,6 +829,106 @@ class HealthPlugin : Plugin() {
                     
                 } catch (e: Exception) {
                     call.reject("Error reading weight data: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun queryBodyFatPercentage(call: PluginCall) {
+        try {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    if (!hasPermission(CapHealthPermission.READ_BODY_FAT_PERCENTAGE)) {
+                        call.reject("Body fat percentage permission not granted")
+                        return@launch
+                    }
+
+                    val request = ReadRecordsRequest(
+                        recordType = BodyFatRecord::class,
+                        timeRangeFilter = TimeRangeFilter.between(Instant.EPOCH, Instant.now()),
+                        ascendingOrder = false,
+                        pageSize = 1
+                    )
+
+                    val response = healthConnectClient.readRecords(request)
+
+                    if (response.records.isEmpty()) {
+                        call.resolve(JSObject().apply {
+                            put("percentage", null)
+                            put("timestamp", null)
+                        })
+                        return@launch
+                    }
+
+                    val bodyFatRecord = response.records.first()
+                    val result = JSObject().apply {
+                        put("percentage", bodyFatRecord.percentage.value)
+                        put("timestamp", bodyFatRecord.time.toString())
+                        put("metadata", JSObject().apply {
+                            put("id", bodyFatRecord.metadata.id)
+                            put("lastModifiedTime", bodyFatRecord.metadata.lastModifiedTime.toString())
+                            put("clientRecordId", bodyFatRecord.metadata.clientRecordId ?: "")
+                            put("dataOrigin", bodyFatRecord.metadata.dataOrigin.packageName)
+                        })
+                    }
+
+                    call.resolve(result)
+
+                } catch (e: Exception) {
+                    call.reject("Error reading body fat percentage data: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun queryLeanBodyMass(call: PluginCall) {
+        try {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    if (!hasPermission(CapHealthPermission.READ_LEAN_BODY_MASS)) {
+                        call.reject("Lean body mass permission not granted")
+                        return@launch
+                    }
+
+                    val request = ReadRecordsRequest(
+                        recordType = LeanBodyMassRecord::class,
+                        timeRangeFilter = TimeRangeFilter.between(Instant.EPOCH, Instant.now()),
+                        ascendingOrder = false,
+                        pageSize = 1
+                    )
+
+                    val response = healthConnectClient.readRecords(request)
+
+                    if (response.records.isEmpty()) {
+                        call.resolve(JSObject().apply {
+                            put("mass", null)
+                            put("timestamp", null)
+                        })
+                        return@launch
+                    }
+
+                    val leanBodyMassRecord = response.records.first()
+                    val result = JSObject().apply {
+                        put("mass", leanBodyMassRecord.mass.inKilograms)
+                        put("timestamp", leanBodyMassRecord.time.toString())
+                        put("metadata", JSObject().apply {
+                            put("id", leanBodyMassRecord.metadata.id)
+                            put("lastModifiedTime", leanBodyMassRecord.metadata.lastModifiedTime.toString())
+                            put("clientRecordId", leanBodyMassRecord.metadata.clientRecordId ?: "")
+                            put("dataOrigin", leanBodyMassRecord.metadata.dataOrigin.packageName)
+                        })
+                    }
+
+                    call.resolve(result)
+
+                } catch (e: Exception) {
+                    call.reject("Error reading lean body mass data: ${e.message}")
                 }
             }
         } catch (e: Exception) {

@@ -1,0 +1,1110 @@
+{
+  "api": {
+    "name": "HealthPlugin",
+    "slug": "healthplugin",
+    "docs": "",
+    "tags": [],
+    "methods": [
+      {
+        "name": "isHealthAvailable",
+        "signature": "() => Promise<{ available: boolean; }>",
+        "parameters": [],
+        "returns": "Promise<{ available: boolean; }>",
+        "tags": [],
+        "docs": "Checks if health API is available.\nAndroid: If false is returned, the Google Health Connect app is probably not installed.\nSee showHealthConnectInPlayStore()",
+        "complexTypes": [],
+        "slug": "ishealthavailable"
+      },
+      {
+        "name": "checkHealthPermissions",
+        "signature": "(permissions: PermissionsRequest) => Promise<PermissionResponse>",
+        "parameters": [
+          {
+            "name": "permissions",
+            "docs": "permissions to query",
+            "type": "PermissionsRequest"
+          }
+        ],
+        "returns": "Promise<PermissionResponse>",
+        "tags": [
+          {
+            "name": "param",
+            "text": "permissions permissions to query"
+          }
+        ],
+        "docs": "Android only: Returns for each given permission, if it was granted by the underlying health API",
+        "complexTypes": [
+          "PermissionResponse",
+          "PermissionsRequest"
+        ],
+        "slug": "checkhealthpermissions"
+      },
+      {
+        "name": "requestHealthPermissions",
+        "signature": "(permissions: PermissionsRequest) => Promise<PermissionResponse>",
+        "parameters": [
+          {
+            "name": "permissions",
+            "docs": "permissions to request",
+            "type": "PermissionsRequest"
+          }
+        ],
+        "returns": "Promise<PermissionResponse>",
+        "tags": [
+          {
+            "name": "param",
+            "text": "permissions permissions to request"
+          }
+        ],
+        "docs": "Requests the permissions from the user.\n\nAndroid: Apps can ask only a few times for permissions, after that the user has to grant them manually in\nthe Health Connect app. See openHealthConnectSettings()\n\niOS: If the permissions are already granted or denied, this method will just return without asking the user. In iOS\nwe can't really detect if a user granted or denied a permission. The return value reflects the assumption that all\npermissions were granted.",
+        "complexTypes": [
+          "PermissionResponse",
+          "PermissionsRequest"
+        ],
+        "slug": "requesthealthpermissions"
+      },
+      {
+        "name": "openAppleHealthSettings",
+        "signature": "() => Promise<void>",
+        "parameters": [],
+        "returns": "Promise<void>",
+        "tags": [],
+        "docs": "Opens the apps settings, which is kind of wrong, because health permissions are configured under:\nSettings > Apps > (Apple) Health > Access and Devices > [app-name]\nBut we can't go there directly.",
+        "complexTypes": [],
+        "slug": "openapplehealthsettings"
+      },
+      {
+        "name": "openHealthConnectSettings",
+        "signature": "() => Promise<void>",
+        "parameters": [],
+        "returns": "Promise<void>",
+        "tags": [],
+        "docs": "Opens the Google Health Connect app",
+        "complexTypes": [],
+        "slug": "openhealthconnectsettings"
+      },
+      {
+        "name": "showHealthConnectInPlayStore",
+        "signature": "() => Promise<void>",
+        "parameters": [],
+        "returns": "Promise<void>",
+        "tags": [],
+        "docs": "Opens the Google Health Connect app in PlayStore",
+        "complexTypes": [],
+        "slug": "showhealthconnectinplaystore"
+      },
+      {
+        "name": "queryAggregated",
+        "signature": "(request: QueryAggregatedRequest) => Promise<QueryAggregatedResponse>",
+        "parameters": [
+          {
+            "name": "request",
+            "docs": "",
+            "type": "QueryAggregatedRequest"
+          }
+        ],
+        "returns": "Promise<QueryAggregatedResponse>",
+        "tags": [
+          {
+            "name": "param",
+            "text": "request"
+          }
+        ],
+        "docs": "Query aggregated data",
+        "complexTypes": [
+          "QueryAggregatedResponse",
+          "QueryAggregatedRequest"
+        ],
+        "slug": "queryaggregated"
+      },
+      {
+        "name": "queryWorkouts",
+        "signature": "(request: QueryWorkoutRequest) => Promise<QueryWorkoutResponse>",
+        "parameters": [
+          {
+            "name": "request",
+            "docs": "",
+            "type": "QueryWorkoutRequest"
+          }
+        ],
+        "returns": "Promise<QueryWorkoutResponse>",
+        "tags": [
+          {
+            "name": "param",
+            "text": "request"
+          }
+        ],
+        "docs": "Query workouts",
+        "complexTypes": [
+          "QueryWorkoutResponse",
+          "QueryWorkoutRequest"
+        ],
+        "slug": "queryworkouts"
+      },
+      {
+        "name": "querySleepData",
+        "signature": "(request: QuerySleepRequest) => Promise<QuerySleepResponse>",
+        "parameters": [
+          {
+            "name": "request",
+            "docs": "",
+            "type": "QuerySleepRequest"
+          }
+        ],
+        "returns": "Promise<QuerySleepResponse>",
+        "tags": [
+          {
+            "name": "param",
+            "text": "request"
+          }
+        ],
+        "docs": "Query sleep data",
+        "complexTypes": [
+          "QuerySleepResponse",
+          "QuerySleepRequest"
+        ],
+        "slug": "querysleepdata"
+      },
+      {
+        "name": "queryHeight",
+        "signature": "() => Promise<HeightData>",
+        "parameters": [],
+        "returns": "Promise<HeightData>",
+        "tags": [],
+        "docs": "Query height data",
+        "complexTypes": [
+          "HeightData"
+        ],
+        "slug": "queryheight"
+      },
+      {
+        "name": "queryWeight",
+        "signature": "() => Promise<WeightData>",
+        "parameters": [],
+        "returns": "Promise<WeightData>",
+        "tags": [],
+        "docs": "Query weight data",
+        "complexTypes": [
+          "WeightData"
+        ],
+        "slug": "queryweight"
+      },
+      {
+        "name": "queryBodyFatPercentage",
+        "signature": "() => Promise<BodyFatPercentageData>",
+        "parameters": [],
+        "returns": "Promise<BodyFatPercentageData>",
+        "tags": [],
+        "docs": "Query latest body fat percentage (0–100)",
+        "complexTypes": [
+          "BodyFatPercentageData"
+        ],
+        "slug": "querybodyfatpercentage"
+      },
+      {
+        "name": "queryLeanBodyMass",
+        "signature": "() => Promise<LeanBodyMassData>",
+        "parameters": [],
+        "returns": "Promise<LeanBodyMassData>",
+        "tags": [],
+        "docs": "Query latest lean body mass in kilograms",
+        "complexTypes": [
+          "LeanBodyMassData"
+        ],
+        "slug": "queryleanbodymass"
+      },
+      {
+        "name": "queryBodyTemperature",
+        "signature": "() => Promise<BodyTemperatureData>",
+        "parameters": [],
+        "returns": "Promise<BodyTemperatureData>",
+        "tags": [
+          {
+            "name": "returns",
+            "text": "Body temperature data"
+          },
+          {
+            "name": "since",
+            "text": "0.0.1"
+          }
+        ],
+        "docs": "Query body temperature data",
+        "complexTypes": [
+          "BodyTemperatureData"
+        ],
+        "slug": "querybodytemperature"
+      },
+      {
+        "name": "queryHeartRate",
+        "signature": "(request: QueryHeartRateRequest) => Promise<QueryHeartRateResponse>",
+        "parameters": [
+          {
+            "name": "request",
+            "docs": "date range to query",
+            "type": "QueryHeartRateRequest"
+          }
+        ],
+        "returns": "Promise<QueryHeartRateResponse>",
+        "tags": [
+          {
+            "name": "param",
+            "text": "request date range to query"
+          }
+        ],
+        "docs": "Query heart rate data directly (not tied to a workout)",
+        "complexTypes": [
+          "QueryHeartRateResponse",
+          "QueryHeartRateRequest"
+        ],
+        "slug": "queryheartrate"
+      },
+      {
+        "name": "startSleepObserver",
+        "signature": "() => Promise<void>",
+        "parameters": [],
+        "returns": "Promise<void>",
+        "tags": [],
+        "docs": "iOS only: Starts an HKObserverQuery for sleep data with background delivery enabled.\nWhen new sleep data is written (e.g. after waking up), the plugin fires a\n'sleepDataUpdated' event with the latest sleep sessions from the past 48 hours.\nCall requestHealthPermissions with READ_SLEEP before starting the observer.",
+        "complexTypes": [],
+        "slug": "startsleepobserver"
+      },
+      {
+        "name": "stopSleepObserver",
+        "signature": "() => Promise<void>",
+        "parameters": [],
+        "returns": "Promise<void>",
+        "tags": [],
+        "docs": "iOS only: Stops the background sleep observer query.",
+        "complexTypes": [],
+        "slug": "stopsleepobserver"
+      },
+      {
+        "name": "addListener",
+        "signature": "(eventName: 'sleepDataUpdated', listenerFunc: (event: SleepUpdateEvent) => void) => Promise<{ remove: () => Promise<void>; }>",
+        "parameters": [
+          {
+            "name": "eventName",
+            "docs": "",
+            "type": "'sleepDataUpdated'"
+          },
+          {
+            "name": "listenerFunc",
+            "docs": "",
+            "type": "(event: SleepUpdateEvent) => void"
+          }
+        ],
+        "returns": "Promise<{ remove: () => Promise<void>; }>",
+        "tags": [],
+        "docs": "Listen for plugin events (e.g. 'sleepDataUpdated').",
+        "complexTypes": [
+          "SleepUpdateEvent"
+        ],
+        "slug": "addlistenersleepdataupdated-"
+      }
+    ],
+    "properties": []
+  },
+  "interfaces": [
+    {
+      "name": "PermissionResponse",
+      "slug": "permissionresponse",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "permissions",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "{ [key: string]: boolean; }[]"
+        }
+      ]
+    },
+    {
+      "name": "PermissionsRequest",
+      "slug": "permissionsrequest",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "permissions",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "HealthPermission"
+          ],
+          "type": "HealthPermission[]"
+        }
+      ]
+    },
+    {
+      "name": "QueryAggregatedResponse",
+      "slug": "queryaggregatedresponse",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "aggregatedData",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "AggregatedSample"
+          ],
+          "type": "AggregatedSample[]"
+        }
+      ]
+    },
+    {
+      "name": "AggregatedSample",
+      "slug": "aggregatedsample",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "startDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "endDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "name": "QueryAggregatedRequest",
+      "slug": "queryaggregatedrequest",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "startDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "endDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "dataType",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "'steps' | 'active-calories' | 'mindfulness'"
+        },
+        {
+          "name": "bucket",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "QueryWorkoutResponse",
+      "slug": "queryworkoutresponse",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "workouts",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "Workout"
+          ],
+          "type": "Workout[]"
+        }
+      ]
+    },
+    {
+      "name": "Workout",
+      "slug": "workout",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "startDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "endDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "workoutType",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "sourceName",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "id",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "duration",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number"
+        },
+        {
+          "name": "distance",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "steps",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "calories",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number"
+        },
+        {
+          "name": "sourceBundleId",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "route",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "RouteSample"
+          ],
+          "type": "RouteSample[] | undefined"
+        },
+        {
+          "name": "heartRate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "HeartRateSample"
+          ],
+          "type": "HeartRateSample[] | undefined"
+        }
+      ]
+    },
+    {
+      "name": "RouteSample",
+      "slug": "routesample",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "timestamp",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "lat",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number"
+        },
+        {
+          "name": "lng",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number"
+        },
+        {
+          "name": "alt",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number | undefined"
+        }
+      ]
+    },
+    {
+      "name": "HeartRateSample",
+      "slug": "heartratesample",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "timestamp",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "bpm",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "name": "QueryWorkoutRequest",
+      "slug": "queryworkoutrequest",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "startDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "endDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "includeHeartRate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "boolean"
+        },
+        {
+          "name": "includeRoute",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "boolean"
+        },
+        {
+          "name": "includeSteps",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "QuerySleepResponse",
+      "slug": "querysleepresponse",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "sleepSessions",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "SleepSession"
+          ],
+          "type": "SleepSession[]"
+        }
+      ]
+    },
+    {
+      "name": "SleepSession",
+      "slug": "sleepsession",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "id",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "startDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "endDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "sourceName",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "sourceBundleId",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "title",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "duration",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number"
+        },
+        {
+          "name": "stages",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "SleepStage"
+          ],
+          "type": "SleepStage[] | undefined"
+        },
+        {
+          "name": "timeInBed",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "sleepTime",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "deepSleepTime",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "remSleepTime",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "lightSleepTime",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number | undefined"
+        },
+        {
+          "name": "awakeTime",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number | undefined"
+        }
+      ]
+    },
+    {
+      "name": "SleepStage",
+      "slug": "sleepstage",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "startDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "endDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "stage",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "duration",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "name": "QuerySleepRequest",
+      "slug": "querysleeprequest",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "startDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "endDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "HeightData",
+      "slug": "heightdata",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "height",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number | null"
+        },
+        {
+          "name": "timestamp",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string | null"
+        },
+        {
+          "name": "metadata",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "{ id: string; lastModifiedTime: string; clientRecordId: string; dataOrigin: string; } | undefined"
+        }
+      ]
+    },
+    {
+      "name": "WeightData",
+      "slug": "weightdata",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "weight",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number | null"
+        },
+        {
+          "name": "timestamp",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string | null"
+        },
+        {
+          "name": "metadata",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "{ id: string; lastModifiedTime: string; clientRecordId: string; dataOrigin: string; } | undefined"
+        }
+      ]
+    },
+    {
+      "name": "BodyFatPercentageData",
+      "slug": "bodyfatpercentagedata",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "percentage",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number | null"
+        },
+        {
+          "name": "timestamp",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string | null"
+        },
+        {
+          "name": "metadata",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "{ id: string; lastModifiedTime: string; clientRecordId: string; dataOrigin: string; } | undefined"
+        }
+      ]
+    },
+    {
+      "name": "LeanBodyMassData",
+      "slug": "leanbodymassdata",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "mass",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number | null"
+        },
+        {
+          "name": "timestamp",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string | null"
+        },
+        {
+          "name": "metadata",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "{ id: string; lastModifiedTime: string; clientRecordId: string; dataOrigin: string; } | undefined"
+        }
+      ]
+    },
+    {
+      "name": "BodyTemperatureData",
+      "slug": "bodytemperaturedata",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "temperature",
+          "tags": [],
+          "docs": "Body temperature value in celsius",
+          "complexTypes": [],
+          "type": "number"
+        },
+        {
+          "name": "timestamp",
+          "tags": [],
+          "docs": "ISO8601 timestamp",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "metadata",
+          "tags": [],
+          "docs": "Metadata about the measurement",
+          "complexTypes": [],
+          "type": "{ id: string; lastModifiedTime: string; clientRecordId: string; dataOrigin: string; }"
+        }
+      ]
+    },
+    {
+      "name": "QueryHeartRateResponse",
+      "slug": "queryheartrateresponse",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "heartRateSamples",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "HeartRateSample"
+          ],
+          "type": "HeartRateSample[]"
+        }
+      ]
+    },
+    {
+      "name": "QueryHeartRateRequest",
+      "slug": "queryheartraterequest",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "startDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "endDate",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "SleepUpdateEvent",
+      "slug": "sleepupdateevent",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "sleepSessions",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "SleepSession"
+          ],
+          "type": "SleepSession[]"
+        }
+      ]
+    }
+  ],
+  "enums": [],
+  "typeAliases": [
+    {
+      "name": "HealthPermission",
+      "slug": "healthpermission",
+      "docs": "",
+      "types": [
+        {
+          "text": "'READ_STEPS'",
+          "complexTypes": []
+        },
+        {
+          "text": "'READ_WORKOUTS'",
+          "complexTypes": []
+        },
+        {
+          "text": "'READ_ACTIVE_CALORIES'",
+          "complexTypes": []
+        },
+        {
+          "text": "'READ_TOTAL_CALORIES'",
+          "complexTypes": []
+        },
+        {
+          "text": "'READ_DISTANCE'",
+          "complexTypes": []
+        },
+        {
+          "text": "'READ_HEART_RATE'",
+          "complexTypes": []
+        },
+        {
+          "text": "'READ_ROUTE'",
+          "complexTypes": []
+        },
+        {
+          "text": "'READ_MINDFULNESS'",
+          "complexTypes": []
+        },
+        {
+          "text": "'READ_SLEEP'",
+          "complexTypes": []
+        },
+        {
+          "text": "'READ_BODY_TEMPERATURE'",
+          "complexTypes": []
+        },
+        {
+          "text": "'READ_HEIGHT'",
+          "complexTypes": []
+        },
+        {
+          "text": "'READ_WEIGHT'",
+          "complexTypes": []
+        },
+        {
+          "text": "'READ_BODY_FAT_PERCENTAGE'",
+          "complexTypes": []
+        },
+        {
+          "text": "'READ_LEAN_BODY_MASS'",
+          "complexTypes": []
+        }
+      ]
+    }
+  ],
+  "pluginConfigs": []
+}

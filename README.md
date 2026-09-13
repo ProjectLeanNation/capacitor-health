@@ -61,7 +61,11 @@ npx cap sync
     <uses-permission android:name="android.permission.health.READ_EXERCISE" />
     <uses-permission android:name="android.permission.health.READ_EXERCISE_ROUTE" />
     <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_BODY_FAT" />
+    <uses-permission android:name="android.permission.health.READ_LEAN_BODY_MASS" />
 ```
+
+Skeletal muscle mass is not supported: neither Apple HealthKit nor Google Health Connect exposes a native data type for it, so this plugin does not sync that metric.
 
 ## API
 
@@ -75,6 +79,16 @@ npx cap sync
 * [`showHealthConnectInPlayStore()`](#showhealthconnectinplaystore)
 * [`queryAggregated(...)`](#queryaggregated)
 * [`queryWorkouts(...)`](#queryworkouts)
+* [`querySleepData(...)`](#querysleepdata)
+* [`queryHeight()`](#queryheight)
+* [`queryWeight()`](#queryweight)
+* [`queryBodyFatPercentage()`](#querybodyfatpercentage)
+* [`queryLeanBodyMass()`](#queryleanbodymass)
+* [`queryBodyTemperature()`](#querybodytemperature)
+* [`queryHeartRate(...)`](#queryheartrate)
+* [`startSleepObserver()`](#startsleepobserver)
+* [`stopSleepObserver()`](#stopsleepobserver)
+* [`addListener('sleepDataUpdated', ...)`](#addlistenersleepdataupdated-)
 * [Interfaces](#interfaces)
 * [Type Aliases](#type-aliases)
 
@@ -208,6 +222,150 @@ Query workouts
 --------------------
 
 
+### querySleepData(...)
+
+```typescript
+querySleepData(request: QuerySleepRequest) => Promise<QuerySleepResponse>
+```
+
+Query sleep data
+
+| Param         | Type                                                            |
+| ------------- | --------------------------------------------------------------- |
+| **`request`** | <code><a href="#querysleeprequest">QuerySleepRequest</a></code> |
+
+**Returns:** <code>Promise&lt;<a href="#querysleepresponse">QuerySleepResponse</a>&gt;</code>
+
+--------------------
+
+
+### queryHeight()
+
+```typescript
+queryHeight() => Promise<HeightData>
+```
+
+Query height data
+
+**Returns:** <code>Promise&lt;<a href="#heightdata">HeightData</a>&gt;</code>
+
+--------------------
+
+
+### queryWeight()
+
+```typescript
+queryWeight() => Promise<WeightData>
+```
+
+Query weight data
+
+**Returns:** <code>Promise&lt;<a href="#weightdata">WeightData</a>&gt;</code>
+
+--------------------
+
+
+### queryBodyFatPercentage()
+
+```typescript
+queryBodyFatPercentage() => Promise<BodyFatPercentageData>
+```
+
+Query latest body fat percentage (0–100)
+
+**Returns:** <code>Promise&lt;<a href="#bodyfatpercentagedata">BodyFatPercentageData</a>&gt;</code>
+
+--------------------
+
+
+### queryLeanBodyMass()
+
+```typescript
+queryLeanBodyMass() => Promise<LeanBodyMassData>
+```
+
+Query latest lean body mass in kilograms
+
+**Returns:** <code>Promise&lt;<a href="#leanbodymassdata">LeanBodyMassData</a>&gt;</code>
+
+--------------------
+
+
+### queryBodyTemperature()
+
+```typescript
+queryBodyTemperature() => Promise<BodyTemperatureData>
+```
+
+Query body temperature data
+
+**Returns:** <code>Promise&lt;<a href="#bodytemperaturedata">BodyTemperatureData</a>&gt;</code>
+
+**Since:** 0.0.1
+
+--------------------
+
+
+### queryHeartRate(...)
+
+```typescript
+queryHeartRate(request: QueryHeartRateRequest) => Promise<QueryHeartRateResponse>
+```
+
+Query heart rate data directly (not tied to a workout)
+
+| Param         | Type                                                                    | Description         |
+| ------------- | ----------------------------------------------------------------------- | ------------------- |
+| **`request`** | <code><a href="#queryheartraterequest">QueryHeartRateRequest</a></code> | date range to query |
+
+**Returns:** <code>Promise&lt;<a href="#queryheartrateresponse">QueryHeartRateResponse</a>&gt;</code>
+
+--------------------
+
+
+### startSleepObserver()
+
+```typescript
+startSleepObserver() => Promise<void>
+```
+
+iOS only: Starts an HKObserverQuery for sleep data with background delivery enabled.
+When new sleep data is written (e.g. after waking up), the plugin fires a
+'sleepDataUpdated' event with the latest sleep sessions from the past 48 hours.
+Call requestHealthPermissions with READ_SLEEP before starting the observer.
+
+--------------------
+
+
+### stopSleepObserver()
+
+```typescript
+stopSleepObserver() => Promise<void>
+```
+
+iOS only: Stops the background sleep observer query.
+
+--------------------
+
+
+### addListener('sleepDataUpdated', ...)
+
+```typescript
+addListener(eventName: 'sleepDataUpdated', listenerFunc: (event: SleepUpdateEvent) => void) => Promise<{ remove: () => Promise<void>; }>
+```
+
+Listen for plugin events (e.g. 'sleepDataUpdated').
+
+| Param              | Type                                                                              |
+| ------------------ | --------------------------------------------------------------------------------- |
+| **`eventName`**    | <code>'sleepDataUpdated'</code>                                                   |
+| **`listenerFunc`** | <code>(event: <a href="#sleepupdateevent">SleepUpdateEvent</a>) =&gt; void</code> |
+
+**Returns:** <code>Promise&lt;{ remove: () =&gt; Promise&lt;void&gt;; }&gt;</code>
+
+--------------------
+
+
 ### Interfaces
 
 
@@ -243,12 +401,12 @@ Query workouts
 
 #### QueryAggregatedRequest
 
-| Prop            | Type                               |
-| --------------- | ---------------------------------- |
-| **`startDate`** | <code>string</code>                |
-| **`endDate`**   | <code>string</code>                |
-| **`dataType`**  | <code>'steps' \| 'calories'</code> |
-| **`bucket`**    | <code>string</code>                |
+| Prop            | Type                                                       |
+| --------------- | ---------------------------------------------------------- |
+| **`startDate`** | <code>string</code>                                        |
+| **`endDate`**   | <code>string</code>                                        |
+| **`dataType`**  | <code>'steps' \| 'active-calories' \| 'mindfulness'</code> |
+| **`bucket`**    | <code>string</code>                                        |
 
 
 #### QueryWorkoutResponse
@@ -269,6 +427,7 @@ Query workouts
 | **`id`**             | <code>string</code>            |
 | **`duration`**       | <code>number</code>            |
 | **`distance`**       | <code>number</code>            |
+| **`steps`**          | <code>number</code>            |
 | **`calories`**       | <code>number</code>            |
 | **`sourceBundleId`** | <code>string</code>            |
 | **`route`**          | <code>RouteSample[]</code>     |
@@ -301,6 +460,119 @@ Query workouts
 | **`endDate`**          | <code>string</code>  |
 | **`includeHeartRate`** | <code>boolean</code> |
 | **`includeRoute`**     | <code>boolean</code> |
+| **`includeSteps`**     | <code>boolean</code> |
+
+
+#### QuerySleepResponse
+
+| Prop                | Type                        |
+| ------------------- | --------------------------- |
+| **`sleepSessions`** | <code>SleepSession[]</code> |
+
+
+#### SleepSession
+
+| Prop                 | Type                      |
+| -------------------- | ------------------------- |
+| **`id`**             | <code>string</code>       |
+| **`startDate`**      | <code>string</code>       |
+| **`endDate`**        | <code>string</code>       |
+| **`sourceName`**     | <code>string</code>       |
+| **`sourceBundleId`** | <code>string</code>       |
+| **`title`**          | <code>string</code>       |
+| **`duration`**       | <code>number</code>       |
+| **`stages`**         | <code>SleepStage[]</code> |
+| **`timeInBed`**      | <code>number</code>       |
+| **`sleepTime`**      | <code>number</code>       |
+| **`deepSleepTime`**  | <code>number</code>       |
+| **`remSleepTime`**   | <code>number</code>       |
+| **`lightSleepTime`** | <code>number</code>       |
+| **`awakeTime`**      | <code>number</code>       |
+
+
+#### SleepStage
+
+| Prop            | Type                |
+| --------------- | ------------------- |
+| **`startDate`** | <code>string</code> |
+| **`endDate`**   | <code>string</code> |
+| **`stage`**     | <code>string</code> |
+| **`duration`**  | <code>number</code> |
+
+
+#### QuerySleepRequest
+
+| Prop            | Type                |
+| --------------- | ------------------- |
+| **`startDate`** | <code>string</code> |
+| **`endDate`**   | <code>string</code> |
+
+
+#### HeightData
+
+| Prop            | Type                                                                                               |
+| --------------- | -------------------------------------------------------------------------------------------------- |
+| **`height`**    | <code>number \| null</code>                                                                        |
+| **`timestamp`** | <code>string \| null</code>                                                                        |
+| **`metadata`**  | <code>{ id: string; lastModifiedTime: string; clientRecordId: string; dataOrigin: string; }</code> |
+
+
+#### WeightData
+
+| Prop            | Type                                                                                               |
+| --------------- | -------------------------------------------------------------------------------------------------- |
+| **`weight`**    | <code>number \| null</code>                                                                        |
+| **`timestamp`** | <code>string \| null</code>                                                                        |
+| **`metadata`**  | <code>{ id: string; lastModifiedTime: string; clientRecordId: string; dataOrigin: string; }</code> |
+
+
+#### BodyFatPercentageData
+
+| Prop             | Type                                                                                               |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
+| **`percentage`** | <code>number \| null</code>                                                                        |
+| **`timestamp`**  | <code>string \| null</code>                                                                        |
+| **`metadata`**   | <code>{ id: string; lastModifiedTime: string; clientRecordId: string; dataOrigin: string; }</code> |
+
+
+#### LeanBodyMassData
+
+| Prop            | Type                                                                                               |
+| --------------- | -------------------------------------------------------------------------------------------------- |
+| **`mass`**      | <code>number \| null</code>                                                                        |
+| **`timestamp`** | <code>string \| null</code>                                                                        |
+| **`metadata`**  | <code>{ id: string; lastModifiedTime: string; clientRecordId: string; dataOrigin: string; }</code> |
+
+
+#### BodyTemperatureData
+
+| Prop              | Type                                                                                               | Description                       |
+| ----------------- | -------------------------------------------------------------------------------------------------- | --------------------------------- |
+| **`temperature`** | <code>number</code>                                                                                | Body temperature value in celsius |
+| **`timestamp`**   | <code>string</code>                                                                                | ISO8601 timestamp                 |
+| **`metadata`**    | <code>{ id: string; lastModifiedTime: string; clientRecordId: string; dataOrigin: string; }</code> | Metadata about the measurement    |
+
+
+#### QueryHeartRateResponse
+
+| Prop                   | Type                           |
+| ---------------------- | ------------------------------ |
+| **`heartRateSamples`** | <code>HeartRateSample[]</code> |
+
+
+#### QueryHeartRateRequest
+
+| Prop            | Type                |
+| --------------- | ------------------- |
+| **`startDate`** | <code>string</code> |
+| **`endDate`**   | <code>string</code> |
+
+
+#### SleepUpdateEvent
+
+| Prop                | Type                        |
+| ------------------- | --------------------------- |
+| **`sleepSessions`** | <code>SleepSession[]</code> |
 
 
 ### Type Aliases
@@ -308,6 +580,6 @@ Query workouts
 
 #### HealthPermission
 
-<code>'READ_STEPS' | 'READ_WORKOUTS' | 'READ_CALORIES' | 'READ_DISTANCE' | 'READ_HEART_RATE' | 'READ_ROUTE'</code>
+<code>'READ_STEPS' | 'READ_WORKOUTS' | 'READ_ACTIVE_CALORIES' | 'READ_TOTAL_CALORIES' | 'READ_DISTANCE' | 'READ_HEART_RATE' | 'READ_ROUTE' | 'READ_MINDFULNESS' | 'READ_SLEEP' | 'READ_BODY_TEMPERATURE' | 'READ_HEIGHT' | 'READ_WEIGHT' | 'READ_BODY_FAT_PERCENTAGE' | 'READ_LEAN_BODY_MASS'</code>
 
 </docgen-api>

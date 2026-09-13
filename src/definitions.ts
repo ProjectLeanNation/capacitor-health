@@ -73,6 +73,16 @@ export interface HealthPlugin {
   queryWeight(): Promise<WeightData>;
 
   /**
+   * Query latest body fat percentage (0–100)
+   */
+  queryBodyFatPercentage(): Promise<BodyFatPercentageData>;
+
+  /**
+   * Query latest lean body mass in kilograms
+   */
+  queryLeanBodyMass(): Promise<LeanBodyMassData>;
+
+  /**
    * Query body temperature data
    * @returns Body temperature data
    * @since 0.0.1
@@ -119,7 +129,9 @@ export declare type HealthPermission =
   | 'READ_SLEEP'
   | 'READ_BODY_TEMPERATURE'
   | 'READ_HEIGHT'
-  | 'READ_WEIGHT';
+  | 'READ_WEIGHT'
+  | 'READ_BODY_FAT_PERCENTAGE'
+  | 'READ_LEAN_BODY_MASS';
 
 export interface PermissionsRequest {
   permissions: HealthPermission[];
@@ -231,6 +243,28 @@ export interface HeightData {
 
 export interface WeightData {
   weight: number | null; // Weight in kilograms
+  timestamp: string | null;
+  metadata?: {
+    id: string;
+    lastModifiedTime: string;
+    clientRecordId: string;
+    dataOrigin: string;
+  };
+}
+
+export interface BodyFatPercentageData {
+  percentage: number | null; // Body fat percentage (0–100)
+  timestamp: string | null;
+  metadata?: {
+    id: string;
+    lastModifiedTime: string;
+    clientRecordId: string;
+    dataOrigin: string;
+  };
+}
+
+export interface LeanBodyMassData {
+  mass: number | null; // Lean body mass in kilograms
   timestamp: string | null;
   metadata?: {
     id: string;

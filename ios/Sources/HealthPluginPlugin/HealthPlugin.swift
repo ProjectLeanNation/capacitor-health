@@ -20,6 +20,8 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "querySleepData", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "queryHeight", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "queryWeight", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "queryBodyFatPercentage", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "queryLeanBodyMass", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "queryBodyTemperature", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "queryHeartRate", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "startSleepObserver", returnType: CAPPluginReturnPromise),
@@ -110,6 +112,14 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
         case "READ_WEIGHT":
             return [
                 HKObjectType.quantityType(forIdentifier: .bodyMass)!
+            ].compactMap{$0}
+        case "READ_BODY_FAT_PERCENTAGE":
+            return [
+                HKObjectType.quantityType(forIdentifier: .bodyFatPercentage)!
+            ].compactMap{$0}
+        case "READ_LEAN_BODY_MASS":
+            return [
+                HKObjectType.quantityType(forIdentifier: .leanBodyMass)!
             ].compactMap{$0}
         case "READ_TEMPERATURE":
             return [
@@ -844,6 +854,137 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
             call.resolve(result)
         }
         
+        healthStore.execute(query)
+    }
+
+    @objc func queryBodyFatPercentage(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            call.reject("Health data is not available on this device")
+            return
+        }
+
+        let typesToRead: Set<HKObjectType> = [
+            HKObjectType.quantityType(forIdentifier: .bodyFatPercentage)!
+        ]
+
+        healthStore.requestAuthorization(toShare: nil, read: typesToRead) { (success, error) in
+            if let error = error {
+                call.reject("Failed to get authorization: \(error.localizedDescription)")
+                return
+            }
+
+            guard success else {
+                call.reject("Authorization failed")
+                return
+            }
+
+            self.handleQueryBodyFatPercentage(call)
+        }
+    }
+
+    @objc func queryLeanBodyMass(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            call.reject("Health data is not available on this device")
+            return
+        }
+
+        let typesToRead: Set<HKObjectType> = [
+            HKObjectType.quantityType(forIdentifier: .leanBodyMass)!
+        ]
+
+        healthStore.requestAuthorization(toShare: nil, read: typesToRead) { (success, error) in
+            if let error = error {
+                call.reject("Failed to get authorization: \(error.localizedDescription)")
+                return
+            }
+
+            guard success else {
+                call.reject("Authorization failed")
+                return
+            }
+
+            self.handleQueryLeanBodyMass(call)
+        }
+    }
+
+    func handleQueryBodyFatPercentage(_ call: CAPPluginCall) {
+        guard let bodyFatType = HKObjectType.quantityType(forIdentifier: .bodyFatPercentage) else {
+            call.reject("Body fat percentage type is not available")
+            return
+        }
+
+        let query = HKSampleQuery(sampleType: bodyFatType, predicate: nil, limit: 1, sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]) { (query, samples, error) in
+            if let error = error {
+                call.reject("Error querying body fat percentage: \(error.localizedDescription)")
+                return
+            }
+
+            guard let bodyFatSample = samples?.first as? HKQuantitySample else {
+                call.resolve([
+                    "percentage": nil,
+                    "timestamp": nil
+                ])
+                return
+            }
+
+            // HealthKit stores body fat as a fraction (0.0–1.0); convert to 0–100 percentage
+            let percentageValue = bodyFatSample.quantity.doubleValue(for: HKUnit.percent()) * 100
+            let dateFormatter = ISO8601DateFormatter()
+
+            let result: [String: Any] = [
+                "percentage": percentageValue,
+                "timestamp": dateFormatter.string(from: bodyFatSample.startDate),
+                "metadata": [
+                    "id": bodyFatSample.uuid.uuidString,
+                    "lastModifiedTime": dateFormatter.string(from: bodyFatSample.endDate),
+                    "clientRecordId": bodyFatSample.metadata?["clientRecordId"] as? String ?? "",
+                    "dataOrigin": bodyFatSample.sourceRevision.source.bundleIdentifier
+                ]
+            ]
+
+            call.resolve(result)
+        }
+
+        healthStore.execute(query)
+    }
+
+    func handleQueryLeanBodyMass(_ call: CAPPluginCall) {
+        guard let leanBodyMassType = HKObjectType.quantityType(forIdentifier: .leanBodyMass) else {
+            call.reject("Lean body mass type is not available")
+            return
+        }
+
+        let query = HKSampleQuery(sampleType: leanBodyMassType, predicate: nil, limit: 1, sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]) { (query, samples, error) in
+            if let error = error {
+                call.reject("Error querying lean body mass: \(error.localizedDescription)")
+                return
+            }
+
+            guard let leanBodyMassSample = samples?.first as? HKQuantitySample else {
+                call.resolve([
+                    "mass": nil,
+                    "timestamp": nil
+                ])
+                return
+            }
+
+            let massValue = leanBodyMassSample.quantity.doubleValue(for: HKUnit.gramUnit(with: .kilo))
+            let dateFormatter = ISO8601DateFormatter()
+
+            let result: [String: Any] = [
+                "mass": massValue,
+                "timestamp": dateFormatter.string(from: leanBodyMassSample.startDate),
+                "metadata": [
+                    "id": leanBodyMassSample.uuid.uuidString,
+                    "lastModifiedTime": dateFormatter.string(from: leanBodyMassSample.endDate),
+                    "clientRecordId": leanBodyMassSample.metadata?["clientRecordId"] as? String ?? "",
+                    "dataOrigin": leanBodyMassSample.sourceRevision.source.bundleIdentifier
+                ]
+            ]
+
+            call.resolve(result)
+        }
+
         healthStore.execute(query)
     }
     
