@@ -121,6 +121,10 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
             return [
                 HKObjectType.quantityType(forIdentifier: .leanBodyMass)!
             ].compactMap{$0}
+        case "READ_EXERCISE_MINUTES":
+            return [
+                HKObjectType.quantityType(forIdentifier: .appleExerciseTime)!
+            ].compactMap{$0}
         case "READ_TEMPERATURE":
             return [
                 HKObjectType.quantityType(forIdentifier: .bodyTemperature)!
@@ -136,6 +140,8 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
             return HKObjectType.quantityType(forIdentifier: .stepCount)
         case "active-calories":
             return HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)
+        case "exercise-minutes":
+            return HKObjectType.quantityType(forIdentifier: .appleExerciseTime)
         default:
             return nil
         }
@@ -202,6 +208,8 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
                             value = sum.doubleValue(for: HKUnit.count())
                         } else if(dataTypeString == "active-calories" && dataType.is(compatibleWith: HKUnit.kilocalorie())) {
                             value = sum.doubleValue(for: HKUnit.kilocalorie())
+                        } else if(dataTypeString == "exercise-minutes" && dataType.is(compatibleWith: HKUnit.minute())) {
+                            value = sum.doubleValue(for: HKUnit.minute())
                         } else if(dataTypeString == "mindfulness" && dataType.is(compatibleWith: HKUnit.second())) {
                             value = sum.doubleValue(for: HKUnit.second())
                         }

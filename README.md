@@ -67,6 +67,8 @@ npx cap sync
 
 Skeletal muscle mass is not supported: neither Apple HealthKit nor Google Health Connect exposes a native data type for it, so this plugin does not sync that metric.
 
+`exercise-minutes` (via `queryAggregated`) is the closest shared metric, not an identical definition: iOS reads Apple Exercise Time (Activity ring minutes); Android sums Health Connect exercise-session duration. Both require `READ_EXERCISE_MINUTES` (Android maps to `READ_EXERCISE`, already listed above).
+
 ## API
 
 <docgen-index>
@@ -403,12 +405,12 @@ Listen for plugin events (e.g. 'sleepDataUpdated').
 
 #### QueryAggregatedRequest
 
-| Prop            | Type                                                       |
-| --------------- | ---------------------------------------------------------- |
-| **`startDate`** | <code>string</code>                                        |
-| **`endDate`**   | <code>string</code>                                        |
-| **`dataType`**  | <code>'steps' \| 'active-calories' \| 'mindfulness'</code> |
-| **`bucket`**    | <code>string</code>                                        |
+| Prop            | Type                                                                             | Description                                                                                                                                                                                                                                                                                  |
+| --------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`startDate`** | <code>string</code>                                                              |                                                                                                                                                                                                                                                                                              |
+| **`endDate`**   | <code>string</code>                                                              |                                                                                                                                                                                                                                                                                              |
+| **`dataType`**  | <code>'steps' \| 'active-calories' \| 'mindfulness' \| 'exercise-minutes'</code> | Aggregated metric to query. - `exercise-minutes`: minutes of exercise activity. iOS uses Apple Exercise Time (Activity ring). Android uses total Health Connect exercise-session duration converted to minutes. These are the closest cross-platform equivalents, not identical definitions. |
+| **`bucket`**    | <code>string</code>                                                              |                                                                                                                                                                                                                                                                                              |
 
 
 #### QueryWorkoutResponse
@@ -587,7 +589,7 @@ Dates are ISO8601 strings.
 
 #### HealthPermission
 
-<code>'READ_STEPS' | 'READ_WORKOUTS' | 'READ_ACTIVE_CALORIES' | 'READ_TOTAL_CALORIES' | 'READ_DISTANCE' | 'READ_HEART_RATE' | 'READ_ROUTE' | 'READ_MINDFULNESS' | 'READ_SLEEP' | 'READ_BODY_TEMPERATURE' | 'READ_HEIGHT' | 'READ_WEIGHT' | 'READ_BODY_FAT_PERCENTAGE' | 'READ_LEAN_BODY_MASS'</code>
+<code>'READ_STEPS' | 'READ_WORKOUTS' | 'READ_ACTIVE_CALORIES' | 'READ_TOTAL_CALORIES' | 'READ_DISTANCE' | 'READ_HEART_RATE' | 'READ_ROUTE' | 'READ_MINDFULNESS' | 'READ_SLEEP' | 'READ_BODY_TEMPERATURE' | 'READ_HEIGHT' | 'READ_WEIGHT' | 'READ_BODY_FAT_PERCENTAGE' | 'READ_LEAN_BODY_MASS' | 'READ_EXERCISE_MINUTES'</code>
 
 
 #### ExerciseType

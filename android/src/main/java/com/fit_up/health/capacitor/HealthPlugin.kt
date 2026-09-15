@@ -51,7 +51,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.jvm.optionals.getOrDefault
 
 enum class CapHealthPermission {
-    READ_STEPS, READ_WORKOUTS, READ_HEART_RATE, READ_ROUTE, READ_ACTIVE_CALORIES, READ_TOTAL_CALORIES, READ_DISTANCE, READ_SLEEP, READ_HEIGHT, READ_WEIGHT, READ_BODY_TEMPERATURE, READ_BODY_FAT_PERCENTAGE, READ_LEAN_BODY_MASS;
+    READ_STEPS, READ_WORKOUTS, READ_HEART_RATE, READ_ROUTE, READ_ACTIVE_CALORIES, READ_TOTAL_CALORIES, READ_DISTANCE, READ_SLEEP, READ_HEIGHT, READ_WEIGHT, READ_BODY_TEMPERATURE, READ_BODY_FAT_PERCENTAGE, READ_LEAN_BODY_MASS, READ_EXERCISE_MINUTES;
 
     companion object {
         fun from(s: String): CapHealthPermission? {
@@ -119,6 +119,10 @@ enum class CapHealthPermission {
         Permission(
             alias = "READ_LEAN_BODY_MASS",
             strings = ["android.permission.health.READ_LEAN_BODY_MASS"]
+        ),
+        Permission(
+            alias = "READ_EXERCISE_MINUTES",
+            strings = ["android.permission.health.READ_EXERCISE"]
         )
     ]
 )
@@ -180,7 +184,9 @@ class HealthPlugin : Plugin() {
         Pair(CapHealthPermission.READ_HEIGHT, "android.permission.health.READ_HEIGHT"),
         Pair(CapHealthPermission.READ_WEIGHT, "android.permission.health.READ_WEIGHT"),
         Pair(CapHealthPermission.READ_BODY_FAT_PERCENTAGE, "android.permission.health.READ_BODY_FAT"),
-        Pair(CapHealthPermission.READ_LEAN_BODY_MASS, "android.permission.health.READ_LEAN_BODY_MASS")
+        Pair(CapHealthPermission.READ_LEAN_BODY_MASS, "android.permission.health.READ_LEAN_BODY_MASS"),
+        // Same underlying HC permission as workouts; exercise minutes = session duration total
+        Pair(CapHealthPermission.READ_EXERCISE_MINUTES, "android.permission.health.READ_EXERCISE")
     )
 
     // Check if a set of permissions are granted
@@ -294,6 +300,11 @@ class HealthPlugin : Plugin() {
                 TotalCaloriesBurnedRecord.ENERGY_TOTAL
             ) { it?.inKilocalories }
             "distance" -> metricAndMapper("distance", CapHealthPermission.READ_DISTANCE, DistanceRecord.DISTANCE_TOTAL) { it?.inMeters }
+            "exercise-minutes" -> metricAndMapper(
+                "exercise-minutes",
+                CapHealthPermission.READ_EXERCISE_MINUTES,
+                ExerciseSessionRecord.EXERCISE_DURATION_TOTAL
+            ) { duration -> duration?.toMinutes()?.toDouble() }
             else -> throw RuntimeException("Unsupported dataType: $dataType")
         }
     }

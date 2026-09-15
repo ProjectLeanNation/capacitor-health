@@ -133,7 +133,8 @@ export declare type HealthPermission =
   | 'READ_HEIGHT'
   | 'READ_WEIGHT'
   | 'READ_BODY_FAT_PERCENTAGE'
-  | 'READ_LEAN_BODY_MASS';
+  | 'READ_LEAN_BODY_MASS'
+  | 'READ_EXERCISE_MINUTES';
 
 export interface PermissionsRequest {
   permissions: HealthPermission[];
@@ -300,7 +301,14 @@ export interface Workout {
 export interface QueryAggregatedRequest {
   startDate: string;
   endDate: string;
-  dataType: 'steps' | 'active-calories' | 'mindfulness';
+  /**
+   * Aggregated metric to query.
+   * - `exercise-minutes`: minutes of exercise activity.
+   *   iOS uses Apple Exercise Time (Activity ring). Android uses total
+   *   Health Connect exercise-session duration converted to minutes.
+   *   These are the closest cross-platform equivalents, not identical definitions.
+   */
+  dataType: 'steps' | 'active-calories' | 'mindfulness' | 'exercise-minutes';
   bucket: string; // "hour" | "day" | "week" (iOS); "hour" | "day" (Android)
 }
 

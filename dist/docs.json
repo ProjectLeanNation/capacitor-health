@@ -411,9 +411,9 @@
         {
           "name": "dataType",
           "tags": [],
-          "docs": "",
+          "docs": "Aggregated metric to query.\n- `exercise-minutes`: minutes of exercise activity.\n  iOS uses Apple Exercise Time (Activity ring). Android uses total\n  Health Connect exercise-session duration converted to minutes.\n  These are the closest cross-platform equivalents, not identical definitions.",
           "complexTypes": [],
-          "type": "'steps' | 'active-calories' | 'mindfulness'"
+          "type": "'steps' | 'active-calories' | 'mindfulness' | 'exercise-minutes'"
         },
         {
           "name": "bucket",
@@ -1110,6 +1110,10 @@
         },
         {
           "text": "'READ_LEAN_BODY_MASS'",
+          "complexTypes": []
+        },
+        {
+          "text": "'READ_EXERCISE_MINUTES'",
           "complexTypes": []
         }
       ]
