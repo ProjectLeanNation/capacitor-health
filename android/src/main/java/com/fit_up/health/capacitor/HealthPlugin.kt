@@ -10,6 +10,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.aggregate.AggregateMetric
 import androidx.health.connect.client.aggregate.AggregationResult
+import androidx.health.connect.client.aggregate.AggregationResultGroupedByDuration
 import androidx.health.connect.client.aggregate.AggregationResultGroupedByPeriod
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.BodyFatRecord
@@ -24,6 +25,7 @@ import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.records.WeightRecord
+import androidx.health.connect.client.request.AggregateGroupByDurationRequest
 import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
@@ -38,6 +40,7 @@ import com.getcapacitor.annotation.Permission
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.Period
@@ -308,24 +311,33 @@ class HealthPlugin : Plugin() {
                 return
             }
 
-            val startDateTime = Instant.parse(startDate).atZone(ZoneId.systemDefault()).toLocalDateTime()
-            val endDateTime = Instant.parse(endDate).atZone(ZoneId.systemDefault()).toLocalDateTime()
+            val zone = ZoneId.systemDefault()
+            val startInstant = Instant.parse(startDate)
+            val endInstant = Instant.parse(endDate)
+            val startDateTime = startInstant.atZone(zone).toLocalDateTime()
+            val endDateTime = endInstant.atZone(zone).toLocalDateTime()
 
             val metricAndMapper = getMetricAndMapper(dataType)
 
-            val period = when (bucket) {
-                "day" -> Period.ofDays(1)
-                else -> throw RuntimeException("Unsupported bucket: $bucket")
-            }
-
-
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-
-                    val r = queryAggregatedMetric(metricAndMapper, TimeRangeFilter.between(startDateTime, endDateTime), period)
+                    val samples = when (bucket) {
+                        "day" -> queryAggregatedMetricByPeriod(
+                            metricAndMapper,
+                            TimeRangeFilter.between(startDateTime, endDateTime),
+                            Period.ofDays(1),
+                        )
+                        "hour" -> queryAggregatedMetricByDuration(
+                            metricAndMapper,
+                            TimeRangeFilter.between(startInstant, endInstant),
+                            Duration.ofHours(1),
+                            zone,
+                        )
+                        else -> throw RuntimeException("Unsupported bucket: $bucket")
+                    }
 
                     val aggregatedList = JSArray()
-                    r.forEach { aggregatedList.put(it.toJs()) }
+                    samples.forEach { aggregatedList.put(it.toJs()) }
 
                     val finalResult = JSObject()
                     finalResult.put("aggregatedData", aggregatedList)
@@ -375,7 +387,7 @@ class HealthPlugin : Plugin() {
         }
     }
 
-    private suspend fun queryAggregatedMetric(
+    private suspend fun queryAggregatedMetricByPeriod(
         metricAndMapper: MetricAndMapper, timeRange: TimeRangeFilter, period: Period,
     ): List<AggregatedSample> {
         if (!hasPermission(metricAndMapper.permission)) {
@@ -394,7 +406,35 @@ class HealthPlugin : Plugin() {
             val mappedValue = metricAndMapper.getValue(it.result)
             AggregatedSample(it.startTime, it.endTime, mappedValue)
         }
+    }
 
+    private suspend fun queryAggregatedMetricByDuration(
+        metricAndMapper: MetricAndMapper,
+        timeRange: TimeRangeFilter,
+        duration: Duration,
+        zone: ZoneId,
+    ): List<AggregatedSample> {
+        if (!hasPermission(metricAndMapper.permission)) {
+            return emptyList()
+        }
+
+        val response: List<AggregationResultGroupedByDuration> =
+            healthConnectClient.aggregateGroupByDuration(
+                AggregateGroupByDurationRequest(
+                    metrics = setOf(metricAndMapper.metric),
+                    timeRangeFilter = timeRange,
+                    timeRangeSlicer = duration,
+                )
+            )
+
+        return response.map {
+            val mappedValue = metricAndMapper.getValue(it.result)
+            AggregatedSample(
+                it.startTime.atZone(zone).toLocalDateTime(),
+                it.endTime.atZone(zone).toLocalDateTime(),
+                mappedValue,
+            )
+        }
     }
 
     private suspend fun hasPermission(p: CapHealthPermission): Boolean {
