@@ -474,14 +474,15 @@ class HealthPlugin : Plugin() {
                     workoutObject.put("id", workout.metadata.id)
                     workoutObject.put(
                         "sourceName",
-                        Optional.ofNullable(workout.metadata.device?.model).getOrDefault("") +
-                                Optional.ofNullable(workout.metadata.device?.model).getOrDefault("")
+                        workout.metadata.device?.model ?: ""
                     )
                     workoutObject.put("sourceBundleId", workout.metadata.dataOrigin.packageName)
                     workoutObject.put("startDate", workout.startTime.toString())
                     workoutObject.put("endDate", workout.endTime.toString())
                     workoutObject.put("workoutType", exerciseTypeMapping.getOrDefault(workout.exerciseType, "OTHER"))
-                    workoutObject.put("title", workout.title)
+                    if (workout.title != null) {
+                        workoutObject.put("title", workout.title)
+                    }
                     val duration = if (workout.segments.isEmpty()) {
                         workout.endTime.epochSecond - workout.startTime.epochSecond
                     } else {
@@ -489,20 +490,21 @@ class HealthPlugin : Plugin() {
                             .stream().mapToLong { it }.sum()
                     }
                     workoutObject.put("duration", duration)
+                    // Always present so consumers can rely on a normalized schema
+                    workoutObject.put("calories", 0)
 
                     if (includeSteps) {
                         addWorkoutMetric(workout, workoutObject, getMetricAndMapper("steps"))
                     }
 
                     val readTotalCaloriesResult = addWorkoutMetric(workout, workoutObject, getMetricAndMapper("total-calories"))
-                    if(!readTotalCaloriesResult) {
+                    if (!readTotalCaloriesResult) {
                         addWorkoutMetric(workout, workoutObject, getMetricAndMapper("active-calories"))
                     }
 
                     addWorkoutMetric(workout, workoutObject, getMetricAndMapper("distance"))
 
                     if (includeHeartRate && hasPermission(CapHealthPermission.READ_HEART_RATE)) {
-                        // Query and add heart rate data if requested
                         val heartRates =
                             queryHeartRateForWorkout(workout.startTime, workout.endTime)
                         workoutObject.put("heartRate", heartRates)

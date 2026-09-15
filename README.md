@@ -211,7 +211,9 @@ Query aggregated data
 queryWorkouts(request: QueryWorkoutRequest) => Promise<QueryWorkoutResponse>
 ```
 
-Query workouts
+Query exercise / workout sessions from Apple Health or Google Health Connect.
+Returns a cross-platform normalized schema (ISO8601 dates, seconds, meters, kcal,
+and unified SCREAMING_SNAKE exercise types).
 
 | Param         | Type                                                                |
 | ------------- | ------------------------------------------------------------------- |
@@ -418,49 +420,54 @@ Listen for plugin events (e.g. 'sleepDataUpdated').
 
 #### Workout
 
-| Prop                 | Type                           |
-| -------------------- | ------------------------------ |
-| **`startDate`**      | <code>string</code>            |
-| **`endDate`**        | <code>string</code>            |
-| **`workoutType`**    | <code>string</code>            |
-| **`sourceName`**     | <code>string</code>            |
-| **`id`**             | <code>string</code>            |
-| **`duration`**       | <code>number</code>            |
-| **`distance`**       | <code>number</code>            |
-| **`steps`**          | <code>number</code>            |
-| **`calories`**       | <code>number</code>            |
-| **`sourceBundleId`** | <code>string</code>            |
-| **`route`**          | <code>RouteSample[]</code>     |
-| **`heartRate`**      | <code>HeartRateSample[]</code> |
+Cross-platform exercise / workout session.
+Units: duration = seconds, distance = meters, calories = kilocalories.
+Dates are ISO8601 strings.
+
+| Prop                 | Type                                                  | Description                                                    |
+| -------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
+| **`id`**             | <code>string</code>                                   | Platform record id when available                              |
+| **`startDate`**      | <code>string</code>                                   | ISO8601 start                                                  |
+| **`endDate`**        | <code>string</code>                                   | ISO8601 end                                                    |
+| **`workoutType`**    | <code><a href="#exercisetype">ExerciseType</a></code> | Normalized exercise type (same vocabulary on iOS and Android)  |
+| **`title`**          | <code>string</code>                                   | Optional session title (Android / Health Connect when present) |
+| **`sourceName`**     | <code>string</code>                                   |                                                                |
+| **`sourceBundleId`** | <code>string</code>                                   |                                                                |
+| **`duration`**       | <code>number</code>                                   | Duration in seconds                                            |
+| **`distance`**       | <code>number</code>                                   | Distance in meters                                             |
+| **`steps`**          | <code>number</code>                                   | Step count for the session window                              |
+| **`calories`**       | <code>number</code>                                   | Energy burned in kilocalories (0 when unavailable)             |
+| **`route`**          | <code>RouteSample[]</code>                            |                                                                |
+| **`heartRate`**      | <code>HeartRateSample[]</code>                        |                                                                |
 
 
 #### RouteSample
 
-| Prop            | Type                |
-| --------------- | ------------------- |
-| **`timestamp`** | <code>string</code> |
-| **`lat`**       | <code>number</code> |
-| **`lng`**       | <code>number</code> |
-| **`alt`**       | <code>number</code> |
+| Prop            | Type                | Description       |
+| --------------- | ------------------- | ----------------- |
+| **`timestamp`** | <code>string</code> | ISO8601 timestamp |
+| **`lat`**       | <code>number</code> |                   |
+| **`lng`**       | <code>number</code> |                   |
+| **`alt`**       | <code>number</code> |                   |
 
 
 #### HeartRateSample
 
-| Prop            | Type                |
-| --------------- | ------------------- |
-| **`timestamp`** | <code>string</code> |
-| **`bpm`**       | <code>number</code> |
+| Prop            | Type                | Description       |
+| --------------- | ------------------- | ----------------- |
+| **`timestamp`** | <code>string</code> | ISO8601 timestamp |
+| **`bpm`**       | <code>number</code> |                   |
 
 
 #### QueryWorkoutRequest
 
-| Prop                   | Type                 |
-| ---------------------- | -------------------- |
-| **`startDate`**        | <code>string</code>  |
-| **`endDate`**          | <code>string</code>  |
-| **`includeHeartRate`** | <code>boolean</code> |
-| **`includeRoute`**     | <code>boolean</code> |
-| **`includeSteps`**     | <code>boolean</code> |
+| Prop                   | Type                 | Description                                                    |
+| ---------------------- | -------------------- | -------------------------------------------------------------- |
+| **`startDate`**        | <code>string</code>  | ISO8601 start date                                             |
+| **`endDate`**          | <code>string</code>  | ISO8601 end date                                               |
+| **`includeHeartRate`** | <code>boolean</code> | Include heart-rate samples within each session (default false) |
+| **`includeRoute`**     | <code>boolean</code> | Include GPS route samples when available (default false)       |
+| **`includeSteps`**     | <code>boolean</code> | Include step count for the session window (default false)      |
 
 
 #### QuerySleepResponse
@@ -581,5 +588,13 @@ Listen for plugin events (e.g. 'sleepDataUpdated').
 #### HealthPermission
 
 <code>'READ_STEPS' | 'READ_WORKOUTS' | 'READ_ACTIVE_CALORIES' | 'READ_TOTAL_CALORIES' | 'READ_DISTANCE' | 'READ_HEART_RATE' | 'READ_ROUTE' | 'READ_MINDFULNESS' | 'READ_SLEEP' | 'READ_BODY_TEMPERATURE' | 'READ_HEIGHT' | 'READ_WEIGHT' | 'READ_BODY_FAT_PERCENTAGE' | 'READ_LEAN_BODY_MASS'</code>
+
+
+#### ExerciseType
+
+Normalized exercise type shared by iOS (HealthKit) and Android (Health Connect).
+Platform-specific activities are mapped to the closest shared value.
+
+<code>'AMERICAN_FOOTBALL' | 'ARCHERY' | 'AUSTRALIAN_FOOTBALL' | 'BADMINTON' | 'BARRE' | 'BASEBALL' | 'BASKETBALL' | 'BIKING' | 'BIKING_STATIONARY' | 'BOOT_CAMP' | 'BOWLING' | 'BOXING' | 'CALISTHENICS' | 'COOLDOWN' | 'CORE_TRAINING' | 'CRICKET' | 'CROSS_COUNTRY_SKIING' | 'CURLING' | 'DANCING' | 'ELLIPTICAL' | 'EQUESTRIAN' | 'EXERCISE_CLASS' | 'FENCING' | 'FISHING' | 'FITNESS_GAMING' | 'FRISBEE_DISC' | 'GOLF' | 'GUIDED_BREATHING' | 'GYMNASTICS' | 'HANDBALL' | 'HAND_CYCLING' | 'HIGH_INTENSITY_INTERVAL_TRAINING' | 'HIKING' | 'HUNTING' | 'ICE_HOCKEY' | 'ICE_SKATING' | 'JUMP_ROPE' | 'KICKBOXING' | 'LACROSSE' | 'MARTIAL_ARTS' | 'MIXED_CARDIO' | 'OTHER' | 'PADDLING' | 'PARAGLIDING' | 'PICKLEBALL' | 'PILATES' | 'RACQUETBALL' | 'ROCK_CLIMBING' | 'ROLLER_HOCKEY' | 'ROWING' | 'ROWING_MACHINE' | 'RUGBY' | 'RUNNING' | 'RUNNING_TREADMILL' | 'SAILING' | 'SCUBA_DIVING' | 'SKATING' | 'SKIING' | 'SNOWBOARDING' | 'SNOWSHOEING' | 'SOCCER' | 'SOFTBALL' | 'SQUASH' | 'STAIR_CLIMBING' | 'STAIR_CLIMBING_MACHINE' | 'STEP_TRAINING' | 'STRENGTH_TRAINING' | 'STRETCHING' | 'SURFING' | 'SWIMMING' | 'SWIMMING_OPEN_WATER' | 'SWIMMING_POOL' | 'SWIM_BIKE_RUN' | 'TABLE_TENNIS' | 'TAI_CHI' | 'TENNIS' | 'TRACK_AND_FIELD' | 'TRANSITION' | 'VOLLEYBALL' | 'WALKING' | 'WATER_FITNESS' | 'WATER_POLO' | 'WATER_SPORTS' | 'WEIGHTLIFTING' | 'WHEELCHAIR' | 'WRESTLING' | 'YOGA'</code>
 
 </docgen-api>

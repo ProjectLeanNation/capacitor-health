@@ -46,7 +46,9 @@ export interface HealthPlugin {
      */
     queryAggregated(request: QueryAggregatedRequest): Promise<QueryAggregatedResponse>;
     /**
-     * Query workouts
+     * Query exercise / workout sessions from Apple Health or Google Health Connect.
+     * Returns a cross-platform normalized schema (ISO8601 dates, seconds, meters, kcal,
+     * and unified SCREAMING_SNAKE exercise types).
      * @param request
      */
     queryWorkouts(request: QueryWorkoutRequest): Promise<QueryWorkoutResponse>;
@@ -110,17 +112,24 @@ export interface PermissionResponse {
     }[];
 }
 export interface QueryWorkoutRequest {
+    /** ISO8601 start date */
     startDate: string;
+    /** ISO8601 end date */
     endDate: string;
-    includeHeartRate: boolean;
-    includeRoute: boolean;
-    includeSteps: boolean;
+    /** Include heart-rate samples within each session (default false) */
+    includeHeartRate?: boolean;
+    /** Include GPS route samples when available (default false) */
+    includeRoute?: boolean;
+    /** Include step count for the session window (default false) */
+    includeSteps?: boolean;
 }
 export interface HeartRateSample {
+    /** ISO8601 timestamp */
     timestamp: string;
     bpm: number;
 }
 export interface RouteSample {
+    /** ISO8601 timestamp */
     timestamp: string;
     lat: number;
     lng: number;
@@ -129,17 +138,37 @@ export interface RouteSample {
 export interface QueryWorkoutResponse {
     workouts: Workout[];
 }
+/**
+ * Normalized exercise type shared by iOS (HealthKit) and Android (Health Connect).
+ * Platform-specific activities are mapped to the closest shared value.
+ */
+export declare type ExerciseType = 'AMERICAN_FOOTBALL' | 'ARCHERY' | 'AUSTRALIAN_FOOTBALL' | 'BADMINTON' | 'BARRE' | 'BASEBALL' | 'BASKETBALL' | 'BIKING' | 'BIKING_STATIONARY' | 'BOOT_CAMP' | 'BOWLING' | 'BOXING' | 'CALISTHENICS' | 'COOLDOWN' | 'CORE_TRAINING' | 'CRICKET' | 'CROSS_COUNTRY_SKIING' | 'CURLING' | 'DANCING' | 'ELLIPTICAL' | 'EQUESTRIAN' | 'EXERCISE_CLASS' | 'FENCING' | 'FISHING' | 'FITNESS_GAMING' | 'FRISBEE_DISC' | 'GOLF' | 'GUIDED_BREATHING' | 'GYMNASTICS' | 'HANDBALL' | 'HAND_CYCLING' | 'HIGH_INTENSITY_INTERVAL_TRAINING' | 'HIKING' | 'HUNTING' | 'ICE_HOCKEY' | 'ICE_SKATING' | 'JUMP_ROPE' | 'KICKBOXING' | 'LACROSSE' | 'MARTIAL_ARTS' | 'MIXED_CARDIO' | 'OTHER' | 'PADDLING' | 'PARAGLIDING' | 'PICKLEBALL' | 'PILATES' | 'RACQUETBALL' | 'ROCK_CLIMBING' | 'ROLLER_HOCKEY' | 'ROWING' | 'ROWING_MACHINE' | 'RUGBY' | 'RUNNING' | 'RUNNING_TREADMILL' | 'SAILING' | 'SCUBA_DIVING' | 'SKATING' | 'SKIING' | 'SNOWBOARDING' | 'SNOWSHOEING' | 'SOCCER' | 'SOFTBALL' | 'SQUASH' | 'STAIR_CLIMBING' | 'STAIR_CLIMBING_MACHINE' | 'STEP_TRAINING' | 'STRENGTH_TRAINING' | 'STRETCHING' | 'SURFING' | 'SWIMMING' | 'SWIMMING_OPEN_WATER' | 'SWIMMING_POOL' | 'SWIM_BIKE_RUN' | 'TABLE_TENNIS' | 'TAI_CHI' | 'TENNIS' | 'TRACK_AND_FIELD' | 'TRANSITION' | 'VOLLEYBALL' | 'WALKING' | 'WATER_FITNESS' | 'WATER_POLO' | 'WATER_SPORTS' | 'WEIGHTLIFTING' | 'WHEELCHAIR' | 'WRESTLING' | 'YOGA';
+/**
+ * Cross-platform exercise / workout session.
+ * Units: duration = seconds, distance = meters, calories = kilocalories.
+ * Dates are ISO8601 strings.
+ */
 export interface Workout {
-    startDate: string;
-    endDate: string;
-    workoutType: string;
-    sourceName: string;
+    /** Platform record id when available */
     id?: string;
-    duration: number;
-    distance?: number;
-    steps?: number;
-    calories: number;
+    /** ISO8601 start */
+    startDate: string;
+    /** ISO8601 end */
+    endDate: string;
+    /** Normalized exercise type (same vocabulary on iOS and Android) */
+    workoutType: ExerciseType;
+    /** Optional session title (Android / Health Connect when present) */
+    title?: string;
+    sourceName: string;
     sourceBundleId: string;
+    /** Duration in seconds */
+    duration: number;
+    /** Distance in meters */
+    distance?: number;
+    /** Step count for the session window */
+    steps?: number;
+    /** Energy burned in kilocalories (0 when unavailable) */
+    calories: number;
     route?: RouteSample[];
     heartRate?: HeartRateSample[];
 }
@@ -147,7 +176,7 @@ export interface QueryAggregatedRequest {
     startDate: string;
     endDate: string;
     dataType: 'steps' | 'active-calories' | 'mindfulness';
-    bucket: string; // "hour" | "day" | "week" (iOS); "hour" | "day" (Android)
+    bucket: string;
 }
 export interface QueryAggregatedResponse {
     aggregatedData: AggregatedSample[];

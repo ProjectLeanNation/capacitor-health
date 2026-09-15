@@ -134,7 +134,7 @@
             "text": "request"
           }
         ],
-        "docs": "Query workouts",
+        "docs": "Query exercise / workout sessions from Apple Health or Google Health Connect.\nReturns a cross-platform normalized schema (ISO8601 dates, seconds, meters, kcal,\nand unified SCREAMING_SNAKE exercise types).",
         "complexTypes": [
           "QueryWorkoutResponse",
           "QueryWorkoutRequest"
@@ -445,30 +445,46 @@
     {
       "name": "Workout",
       "slug": "workout",
-      "docs": "",
+      "docs": "Cross-platform exercise / workout session.\nUnits: duration = seconds, distance = meters, calories = kilocalories.\nDates are ISO8601 strings.",
       "tags": [],
       "methods": [],
       "properties": [
         {
+          "name": "id",
+          "tags": [],
+          "docs": "Platform record id when available",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
           "name": "startDate",
           "tags": [],
-          "docs": "",
+          "docs": "ISO8601 start",
           "complexTypes": [],
           "type": "string"
         },
         {
           "name": "endDate",
           "tags": [],
-          "docs": "",
+          "docs": "ISO8601 end",
           "complexTypes": [],
           "type": "string"
         },
         {
           "name": "workoutType",
           "tags": [],
-          "docs": "",
+          "docs": "Normalized exercise type (same vocabulary on iOS and Android)",
+          "complexTypes": [
+            "ExerciseType"
+          ],
+          "type": "ExerciseType"
+        },
+        {
+          "name": "title",
+          "tags": [],
+          "docs": "Optional session title (Android / Health Connect when present)",
           "complexTypes": [],
-          "type": "string"
+          "type": "string | undefined"
         },
         {
           "name": "sourceName",
@@ -478,46 +494,39 @@
           "type": "string"
         },
         {
-          "name": "id",
+          "name": "sourceBundleId",
           "tags": [],
           "docs": "",
           "complexTypes": [],
-          "type": "string | undefined"
+          "type": "string"
         },
         {
           "name": "duration",
           "tags": [],
-          "docs": "",
+          "docs": "Duration in seconds",
           "complexTypes": [],
           "type": "number"
         },
         {
           "name": "distance",
           "tags": [],
-          "docs": "",
+          "docs": "Distance in meters",
           "complexTypes": [],
           "type": "number | undefined"
         },
         {
           "name": "steps",
           "tags": [],
-          "docs": "",
+          "docs": "Step count for the session window",
           "complexTypes": [],
           "type": "number | undefined"
         },
         {
           "name": "calories",
           "tags": [],
-          "docs": "",
+          "docs": "Energy burned in kilocalories (0 when unavailable)",
           "complexTypes": [],
           "type": "number"
-        },
-        {
-          "name": "sourceBundleId",
-          "tags": [],
-          "docs": "",
-          "complexTypes": [],
-          "type": "string"
         },
         {
           "name": "route",
@@ -549,7 +558,7 @@
         {
           "name": "timestamp",
           "tags": [],
-          "docs": "",
+          "docs": "ISO8601 timestamp",
           "complexTypes": [],
           "type": "string"
         },
@@ -586,7 +595,7 @@
         {
           "name": "timestamp",
           "tags": [],
-          "docs": "",
+          "docs": "ISO8601 timestamp",
           "complexTypes": [],
           "type": "string"
         },
@@ -609,37 +618,37 @@
         {
           "name": "startDate",
           "tags": [],
-          "docs": "",
+          "docs": "ISO8601 start date",
           "complexTypes": [],
           "type": "string"
         },
         {
           "name": "endDate",
           "tags": [],
-          "docs": "",
+          "docs": "ISO8601 end date",
           "complexTypes": [],
           "type": "string"
         },
         {
           "name": "includeHeartRate",
           "tags": [],
-          "docs": "",
+          "docs": "Include heart-rate samples within each session (default false)",
           "complexTypes": [],
-          "type": "boolean"
+          "type": "boolean | undefined"
         },
         {
           "name": "includeRoute",
           "tags": [],
-          "docs": "",
+          "docs": "Include GPS route samples when available (default false)",
           "complexTypes": [],
-          "type": "boolean"
+          "type": "boolean | undefined"
         },
         {
           "name": "includeSteps",
           "tags": [],
-          "docs": "",
+          "docs": "Include step count for the session window (default false)",
           "complexTypes": [],
-          "type": "boolean"
+          "type": "boolean | undefined"
         }
       ]
     },
@@ -1101,6 +1110,361 @@
         },
         {
           "text": "'READ_LEAN_BODY_MASS'",
+          "complexTypes": []
+        }
+      ]
+    },
+    {
+      "name": "ExerciseType",
+      "slug": "exercisetype",
+      "docs": "Normalized exercise type shared by iOS (HealthKit) and Android (Health Connect).\nPlatform-specific activities are mapped to the closest shared value.",
+      "types": [
+        {
+          "text": "'AMERICAN_FOOTBALL'",
+          "complexTypes": []
+        },
+        {
+          "text": "'ARCHERY'",
+          "complexTypes": []
+        },
+        {
+          "text": "'AUSTRALIAN_FOOTBALL'",
+          "complexTypes": []
+        },
+        {
+          "text": "'BADMINTON'",
+          "complexTypes": []
+        },
+        {
+          "text": "'BARRE'",
+          "complexTypes": []
+        },
+        {
+          "text": "'BASEBALL'",
+          "complexTypes": []
+        },
+        {
+          "text": "'BASKETBALL'",
+          "complexTypes": []
+        },
+        {
+          "text": "'BIKING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'BIKING_STATIONARY'",
+          "complexTypes": []
+        },
+        {
+          "text": "'BOOT_CAMP'",
+          "complexTypes": []
+        },
+        {
+          "text": "'BOWLING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'BOXING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'CALISTHENICS'",
+          "complexTypes": []
+        },
+        {
+          "text": "'COOLDOWN'",
+          "complexTypes": []
+        },
+        {
+          "text": "'CORE_TRAINING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'CRICKET'",
+          "complexTypes": []
+        },
+        {
+          "text": "'CROSS_COUNTRY_SKIING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'CURLING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'DANCING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'ELLIPTICAL'",
+          "complexTypes": []
+        },
+        {
+          "text": "'EQUESTRIAN'",
+          "complexTypes": []
+        },
+        {
+          "text": "'EXERCISE_CLASS'",
+          "complexTypes": []
+        },
+        {
+          "text": "'FENCING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'FISHING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'FITNESS_GAMING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'FRISBEE_DISC'",
+          "complexTypes": []
+        },
+        {
+          "text": "'GOLF'",
+          "complexTypes": []
+        },
+        {
+          "text": "'GUIDED_BREATHING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'GYMNASTICS'",
+          "complexTypes": []
+        },
+        {
+          "text": "'HANDBALL'",
+          "complexTypes": []
+        },
+        {
+          "text": "'HAND_CYCLING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'HIGH_INTENSITY_INTERVAL_TRAINING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'HIKING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'HUNTING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'ICE_HOCKEY'",
+          "complexTypes": []
+        },
+        {
+          "text": "'ICE_SKATING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'JUMP_ROPE'",
+          "complexTypes": []
+        },
+        {
+          "text": "'KICKBOXING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'LACROSSE'",
+          "complexTypes": []
+        },
+        {
+          "text": "'MARTIAL_ARTS'",
+          "complexTypes": []
+        },
+        {
+          "text": "'MIXED_CARDIO'",
+          "complexTypes": []
+        },
+        {
+          "text": "'OTHER'",
+          "complexTypes": []
+        },
+        {
+          "text": "'PADDLING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'PARAGLIDING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'PICKLEBALL'",
+          "complexTypes": []
+        },
+        {
+          "text": "'PILATES'",
+          "complexTypes": []
+        },
+        {
+          "text": "'RACQUETBALL'",
+          "complexTypes": []
+        },
+        {
+          "text": "'ROCK_CLIMBING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'ROLLER_HOCKEY'",
+          "complexTypes": []
+        },
+        {
+          "text": "'ROWING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'ROWING_MACHINE'",
+          "complexTypes": []
+        },
+        {
+          "text": "'RUGBY'",
+          "complexTypes": []
+        },
+        {
+          "text": "'RUNNING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'RUNNING_TREADMILL'",
+          "complexTypes": []
+        },
+        {
+          "text": "'SAILING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'SCUBA_DIVING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'SKATING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'SKIING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'SNOWBOARDING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'SNOWSHOEING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'SOCCER'",
+          "complexTypes": []
+        },
+        {
+          "text": "'SOFTBALL'",
+          "complexTypes": []
+        },
+        {
+          "text": "'SQUASH'",
+          "complexTypes": []
+        },
+        {
+          "text": "'STAIR_CLIMBING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'STAIR_CLIMBING_MACHINE'",
+          "complexTypes": []
+        },
+        {
+          "text": "'STEP_TRAINING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'STRENGTH_TRAINING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'STRETCHING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'SURFING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'SWIMMING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'SWIMMING_OPEN_WATER'",
+          "complexTypes": []
+        },
+        {
+          "text": "'SWIMMING_POOL'",
+          "complexTypes": []
+        },
+        {
+          "text": "'SWIM_BIKE_RUN'",
+          "complexTypes": []
+        },
+        {
+          "text": "'TABLE_TENNIS'",
+          "complexTypes": []
+        },
+        {
+          "text": "'TAI_CHI'",
+          "complexTypes": []
+        },
+        {
+          "text": "'TENNIS'",
+          "complexTypes": []
+        },
+        {
+          "text": "'TRACK_AND_FIELD'",
+          "complexTypes": []
+        },
+        {
+          "text": "'TRANSITION'",
+          "complexTypes": []
+        },
+        {
+          "text": "'VOLLEYBALL'",
+          "complexTypes": []
+        },
+        {
+          "text": "'WALKING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'WATER_FITNESS'",
+          "complexTypes": []
+        },
+        {
+          "text": "'WATER_POLO'",
+          "complexTypes": []
+        },
+        {
+          "text": "'WATER_SPORTS'",
+          "complexTypes": []
+        },
+        {
+          "text": "'WEIGHTLIFTING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'WHEELCHAIR'",
+          "complexTypes": []
+        },
+        {
+          "text": "'WRESTLING'",
+          "complexTypes": []
+        },
+        {
+          "text": "'YOGA'",
           "complexTypes": []
         }
       ]
