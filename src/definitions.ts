@@ -121,6 +121,7 @@ export interface HealthPlugin {
 
 export declare type HealthPermission =
   | 'READ_STEPS'
+  | 'READ_HEALTH_DATA_HISTORY'
   | 'READ_WORKOUTS'
   | 'READ_ACTIVE_CALORIES'
   | 'READ_TOTAL_CALORIES'

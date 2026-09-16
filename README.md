@@ -56,6 +56,7 @@ npx cap sync
     </queries>
     
     <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_HISTORY" />
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
     <uses-permission android:name="android.permission.health.READ_DISTANCE" />
     <uses-permission android:name="android.permission.health.READ_EXERCISE" />
@@ -589,7 +590,7 @@ Dates are ISO8601 strings.
 
 #### HealthPermission
 
-<code>'READ_STEPS' | 'READ_WORKOUTS' | 'READ_ACTIVE_CALORIES' | 'READ_TOTAL_CALORIES' | 'READ_DISTANCE' | 'READ_HEART_RATE' | 'READ_ROUTE' | 'READ_MINDFULNESS' | 'READ_SLEEP' | 'READ_BODY_TEMPERATURE' | 'READ_HEIGHT' | 'READ_WEIGHT' | 'READ_BODY_FAT_PERCENTAGE' | 'READ_LEAN_BODY_MASS' | 'READ_EXERCISE_MINUTES'</code>
+<code>'READ_STEPS' | 'READ_HEALTH_DATA_HISTORY' | 'READ_WORKOUTS' | 'READ_ACTIVE_CALORIES' | 'READ_TOTAL_CALORIES' | 'READ_DISTANCE' | 'READ_HEART_RATE' | 'READ_ROUTE' | 'READ_MINDFULNESS' | 'READ_SLEEP' | 'READ_BODY_TEMPERATURE' | 'READ_HEIGHT' | 'READ_WEIGHT' | 'READ_BODY_FAT_PERCENTAGE' | 'READ_LEAN_BODY_MASS' | 'READ_EXERCISE_MINUTES'</code>
 
 
 #### ExerciseType

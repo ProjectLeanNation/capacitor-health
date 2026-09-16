@@ -7,6 +7,7 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.aggregate.AggregateMetric
 import androidx.health.connect.client.aggregate.AggregationResult
@@ -51,7 +52,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.jvm.optionals.getOrDefault
 
 enum class CapHealthPermission {
-    READ_STEPS, READ_WORKOUTS, READ_HEART_RATE, READ_ROUTE, READ_ACTIVE_CALORIES, READ_TOTAL_CALORIES, READ_DISTANCE, READ_SLEEP, READ_HEIGHT, READ_WEIGHT, READ_BODY_TEMPERATURE, READ_BODY_FAT_PERCENTAGE, READ_LEAN_BODY_MASS, READ_EXERCISE_MINUTES;
+    READ_STEPS, READ_HEALTH_DATA_HISTORY, READ_WORKOUTS, READ_HEART_RATE, READ_ROUTE, READ_ACTIVE_CALORIES, READ_TOTAL_CALORIES, READ_DISTANCE, READ_SLEEP, READ_HEIGHT, READ_WEIGHT, READ_BODY_TEMPERATURE, READ_BODY_FAT_PERCENTAGE, READ_LEAN_BODY_MASS, READ_EXERCISE_MINUTES;
 
     companion object {
         fun from(s: String): CapHealthPermission? {
@@ -71,6 +72,10 @@ enum class CapHealthPermission {
         Permission(
             alias = "READ_STEPS",
             strings = ["android.permission.health.READ_STEPS"]
+        ),
+        Permission(
+            alias = "READ_HEALTH_DATA_HISTORY",
+            strings = ["android.permission.health.READ_HEALTH_DATA_HISTORY"]
         ),
         Permission(
             alias = "READ_WORKOUTS",
@@ -180,6 +185,7 @@ class HealthPlugin : Plugin() {
         Pair(CapHealthPermission.READ_TOTAL_CALORIES, "android.permission.health.READ_TOTAL_CALORIES_BURNED"),
         Pair(CapHealthPermission.READ_DISTANCE, "android.permission.health.READ_DISTANCE"),
         Pair(CapHealthPermission.READ_STEPS, "android.permission.health.READ_STEPS"),
+        Pair(CapHealthPermission.READ_HEALTH_DATA_HISTORY, "android.permission.health.READ_HEALTH_DATA_HISTORY"),
         Pair(CapHealthPermission.READ_SLEEP, "android.permission.health.READ_SLEEP"),
         Pair(CapHealthPermission.READ_HEIGHT, "android.permission.health.READ_HEIGHT"),
         Pair(CapHealthPermission.READ_WEIGHT, "android.permission.health.READ_WEIGHT"),
@@ -247,7 +253,12 @@ class HealthPlugin : Plugin() {
         }
 
         val permissions = permissionsToRequest.toList<String>().mapNotNull { CapHealthPermission.from(it) }.toSet()
-        val healthConnectPermissions = permissions.mapNotNull { permissionMapping[it] }.toSet()
+        val permissionsToAsk = if (isReadHealthDataHistoryAvailable()) {
+            permissions
+        } else {
+            permissions.filter { it != CapHealthPermission.READ_HEALTH_DATA_HISTORY }.toSet()
+        }
+        val healthConnectPermissions = permissionsToAsk.mapNotNull { permissionMapping[it] }.toSet()
 
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -258,6 +269,25 @@ class HealthPlugin : Plugin() {
                 call.reject("Permission request failed: ${e.message}")
                 requestPermissionContext.set(null)
             }
+        }
+    }
+
+    private fun isReadHealthDataHistoryAvailable(): Boolean {
+        if (!available) {
+            try {
+                healthConnectClient = HealthConnectClient.getOrCreate(context)
+                available = true
+            } catch (e: Exception) {
+                Log.e("CAP-HEALTH", "error health connect client", e)
+                return false
+            }
+        }
+        return try {
+            healthConnectClient.features.getFeatureStatus(
+                HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_HISTORY
+            ) == HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
+        } catch (e: Exception) {
+            false
         }
     }
 

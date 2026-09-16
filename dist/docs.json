@@ -1061,6 +1061,10 @@
           "complexTypes": []
         },
         {
+          "text": "'READ_HEALTH_DATA_HISTORY'",
+          "complexTypes": []
+        },
+        {
           "text": "'READ_WORKOUTS'",
           "complexTypes": []
         },
