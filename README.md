@@ -85,8 +85,11 @@ Skeletal muscle mass is not supported: neither Apple HealthKit nor Google Health
 * [`querySleepData(...)`](#querysleepdata)
 * [`queryHeight()`](#queryheight)
 * [`queryWeight()`](#queryweight)
+* [`queryWeights(...)`](#queryweights)
 * [`queryBodyFatPercentage()`](#querybodyfatpercentage)
+* [`queryBodyFatPercentages(...)`](#querybodyfatpercentages)
 * [`queryLeanBodyMass()`](#queryleanbodymass)
+* [`queryLeanBodyMasses(...)`](#queryleanbodymasses)
 * [`queryBodyTemperature()`](#querybodytemperature)
 * [`queryHeartRate(...)`](#queryheartrate)
 * [`startSleepObserver()`](#startsleepobserver)
@@ -263,9 +266,26 @@ Query height data
 queryWeight() => Promise<WeightData>
 ```
 
-Query weight data
+Query latest weight (most recent sample)
 
 **Returns:** <code>Promise&lt;<a href="#weightdata">WeightData</a>&gt;</code>
+
+--------------------
+
+
+### queryWeights(...)
+
+```typescript
+queryWeights(request: QueryBodySampleRequest) => Promise<QueryWeightsResponse>
+```
+
+Query weight samples in a date range (ISO8601 start/end).
+
+| Param         | Type                                                                      |
+| ------------- | ------------------------------------------------------------------------- |
+| **`request`** | <code><a href="#querybodysamplerequest">QueryBodySampleRequest</a></code> |
+
+**Returns:** <code>Promise&lt;<a href="#queryweightsresponse">QueryWeightsResponse</a>&gt;</code>
 
 --------------------
 
@@ -283,6 +303,24 @@ Query latest body fat percentage (0–100)
 --------------------
 
 
+### queryBodyFatPercentages(...)
+
+```typescript
+queryBodyFatPercentages(request: QueryBodySampleRequest) => Promise<QueryBodyFatPercentagesResponse>
+```
+
+Query body fat percentage samples in a date range (ISO8601 start/end).
+Values are 0–100.
+
+| Param         | Type                                                                      |
+| ------------- | ------------------------------------------------------------------------- |
+| **`request`** | <code><a href="#querybodysamplerequest">QueryBodySampleRequest</a></code> |
+
+**Returns:** <code>Promise&lt;<a href="#querybodyfatpercentagesresponse">QueryBodyFatPercentagesResponse</a>&gt;</code>
+
+--------------------
+
+
 ### queryLeanBodyMass()
 
 ```typescript
@@ -292,6 +330,24 @@ queryLeanBodyMass() => Promise<LeanBodyMassData>
 Query latest lean body mass in kilograms
 
 **Returns:** <code>Promise&lt;<a href="#leanbodymassdata">LeanBodyMassData</a>&gt;</code>
+
+--------------------
+
+
+### queryLeanBodyMasses(...)
+
+```typescript
+queryLeanBodyMasses(request: QueryBodySampleRequest) => Promise<QueryLeanBodyMassesResponse>
+```
+
+Query lean body mass samples in a date range (ISO8601 start/end).
+Values are kilograms.
+
+| Param         | Type                                                                      |
+| ------------- | ------------------------------------------------------------------------- |
+| **`request`** | <code><a href="#querybodysamplerequest">QueryBodySampleRequest</a></code> |
+
+**Returns:** <code>Promise&lt;<a href="#queryleanbodymassesresponse">QueryLeanBodyMassesResponse</a>&gt;</code>
 
 --------------------
 
@@ -536,6 +592,21 @@ Dates are ISO8601 strings.
 | **`metadata`**  | <code>{ id: string; lastModifiedTime: string; clientRecordId: string; dataOrigin: string; }</code> |
 
 
+#### QueryWeightsResponse
+
+| Prop          | Type                      |
+| ------------- | ------------------------- |
+| **`samples`** | <code>WeightData[]</code> |
+
+
+#### QueryBodySampleRequest
+
+| Prop            | Type                | Description        |
+| --------------- | ------------------- | ------------------ |
+| **`startDate`** | <code>string</code> | ISO8601 start date |
+| **`endDate`**   | <code>string</code> | ISO8601 end date   |
+
+
 #### BodyFatPercentageData
 
 | Prop             | Type                                                                                               |
@@ -545,6 +616,13 @@ Dates are ISO8601 strings.
 | **`metadata`**   | <code>{ id: string; lastModifiedTime: string; clientRecordId: string; dataOrigin: string; }</code> |
 
 
+#### QueryBodyFatPercentagesResponse
+
+| Prop          | Type                                 |
+| ------------- | ------------------------------------ |
+| **`samples`** | <code>BodyFatPercentageData[]</code> |
+
+
 #### LeanBodyMassData
 
 | Prop            | Type                                                                                               |
@@ -552,6 +630,13 @@ Dates are ISO8601 strings.
 | **`mass`**      | <code>number \| null</code>                                                                        |
 | **`timestamp`** | <code>string \| null</code>                                                                        |
 | **`metadata`**  | <code>{ id: string; lastModifiedTime: string; clientRecordId: string; dataOrigin: string; }</code> |
+
+
+#### QueryLeanBodyMassesResponse
+
+| Prop          | Type                            |
+| ------------- | ------------------------------- |
+| **`samples`** | <code>LeanBodyMassData[]</code> |
 
 
 #### BodyTemperatureData

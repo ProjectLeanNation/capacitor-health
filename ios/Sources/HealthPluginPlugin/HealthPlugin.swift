@@ -20,8 +20,11 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "querySleepData", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "queryHeight", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "queryWeight", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "queryWeights", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "queryBodyFatPercentage", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "queryBodyFatPercentages", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "queryLeanBodyMass", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "queryLeanBodyMasses", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "queryBodyTemperature", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "queryHeartRate", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "startSleepObserver", returnType: CAPPluginReturnPromise),
@@ -907,6 +910,81 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
+    @objc func queryWeights(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            call.reject("Health data is not available on this device")
+            return
+        }
+
+        let typesToRead: Set<HKObjectType> = [
+            HKObjectType.quantityType(forIdentifier: .bodyMass)!
+        ]
+
+        healthStore.requestAuthorization(toShare: nil, read: typesToRead) { (success, error) in
+            if let error = error {
+                call.reject("Failed to get authorization: \(error.localizedDescription)")
+                return
+            }
+
+            guard success else {
+                call.reject("Authorization failed")
+                return
+            }
+
+            self.handleQueryWeights(call)
+        }
+    }
+
+    @objc func queryBodyFatPercentages(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            call.reject("Health data is not available on this device")
+            return
+        }
+
+        let typesToRead: Set<HKObjectType> = [
+            HKObjectType.quantityType(forIdentifier: .bodyFatPercentage)!
+        ]
+
+        healthStore.requestAuthorization(toShare: nil, read: typesToRead) { (success, error) in
+            if let error = error {
+                call.reject("Failed to get authorization: \(error.localizedDescription)")
+                return
+            }
+
+            guard success else {
+                call.reject("Authorization failed")
+                return
+            }
+
+            self.handleQueryBodyFatPercentages(call)
+        }
+    }
+
+    @objc func queryLeanBodyMasses(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            call.reject("Health data is not available on this device")
+            return
+        }
+
+        let typesToRead: Set<HKObjectType> = [
+            HKObjectType.quantityType(forIdentifier: .leanBodyMass)!
+        ]
+
+        healthStore.requestAuthorization(toShare: nil, read: typesToRead) { (success, error) in
+            if let error = error {
+                call.reject("Failed to get authorization: \(error.localizedDescription)")
+                return
+            }
+
+            guard success else {
+                call.reject("Authorization failed")
+                return
+            }
+
+            self.handleQueryLeanBodyMasses(call)
+        }
+    }
+
     func handleQueryBodyFatPercentage(_ call: CAPPluginCall) {
         guard let bodyFatType = HKObjectType.quantityType(forIdentifier: .bodyFatPercentage) else {
             call.reject("Body fat percentage type is not available")
@@ -987,7 +1065,139 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
 
         healthStore.execute(query)
     }
-    
+
+    func handleQueryWeights(_ call: CAPPluginCall) {
+        guard let startDateString = call.getString("startDate"),
+              let endDateString = call.getString("endDate"),
+              let startDate = self.isoDateFormatter.date(from: startDateString),
+              let endDate = self.isoDateFormatter.date(from: endDateString) else {
+            call.reject("Missing required parameters: startDate or endDate")
+            return
+        }
+
+        guard let weightType = HKObjectType.quantityType(forIdentifier: .bodyMass) else {
+            call.reject("Weight type is not available")
+            return
+        }
+
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+        let query = HKSampleQuery(sampleType: weightType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sort]) { _, samples, error in
+            if let error = error {
+                call.reject("Error querying weights: \(error.localizedDescription)")
+                return
+            }
+
+            let dateFormatter = ISO8601DateFormatter()
+            var samplesArray: [[String: Any]] = []
+
+            for sample in (samples as? [HKQuantitySample]) ?? [] {
+                samplesArray.append([
+                    "weight": sample.quantity.doubleValue(for: HKUnit.gramUnit(with: .kilo)),
+                    "timestamp": dateFormatter.string(from: sample.startDate),
+                    "metadata": [
+                        "id": sample.uuid.uuidString,
+                        "lastModifiedTime": dateFormatter.string(from: sample.endDate),
+                        "clientRecordId": sample.metadata?["clientRecordId"] as? String ?? "",
+                        "dataOrigin": sample.sourceRevision.source.bundleIdentifier
+                    ]
+                ])
+            }
+
+            call.resolve(["samples": samplesArray])
+        }
+
+        healthStore.execute(query)
+    }
+
+    func handleQueryBodyFatPercentages(_ call: CAPPluginCall) {
+        guard let startDateString = call.getString("startDate"),
+              let endDateString = call.getString("endDate"),
+              let startDate = self.isoDateFormatter.date(from: startDateString),
+              let endDate = self.isoDateFormatter.date(from: endDateString) else {
+            call.reject("Missing required parameters: startDate or endDate")
+            return
+        }
+
+        guard let bodyFatType = HKObjectType.quantityType(forIdentifier: .bodyFatPercentage) else {
+            call.reject("Body fat percentage type is not available")
+            return
+        }
+
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+        let query = HKSampleQuery(sampleType: bodyFatType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sort]) { _, samples, error in
+            if let error = error {
+                call.reject("Error querying body fat percentages: \(error.localizedDescription)")
+                return
+            }
+
+            let dateFormatter = ISO8601DateFormatter()
+            var samplesArray: [[String: Any]] = []
+
+            for sample in (samples as? [HKQuantitySample]) ?? [] {
+                samplesArray.append([
+                    "percentage": sample.quantity.doubleValue(for: HKUnit.percent()) * 100,
+                    "timestamp": dateFormatter.string(from: sample.startDate),
+                    "metadata": [
+                        "id": sample.uuid.uuidString,
+                        "lastModifiedTime": dateFormatter.string(from: sample.endDate),
+                        "clientRecordId": sample.metadata?["clientRecordId"] as? String ?? "",
+                        "dataOrigin": sample.sourceRevision.source.bundleIdentifier
+                    ]
+                ])
+            }
+
+            call.resolve(["samples": samplesArray])
+        }
+
+        healthStore.execute(query)
+    }
+
+    func handleQueryLeanBodyMasses(_ call: CAPPluginCall) {
+        guard let startDateString = call.getString("startDate"),
+              let endDateString = call.getString("endDate"),
+              let startDate = self.isoDateFormatter.date(from: startDateString),
+              let endDate = self.isoDateFormatter.date(from: endDateString) else {
+            call.reject("Missing required parameters: startDate or endDate")
+            return
+        }
+
+        guard let leanBodyMassType = HKObjectType.quantityType(forIdentifier: .leanBodyMass) else {
+            call.reject("Lean body mass type is not available")
+            return
+        }
+
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+        let query = HKSampleQuery(sampleType: leanBodyMassType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sort]) { _, samples, error in
+            if let error = error {
+                call.reject("Error querying lean body masses: \(error.localizedDescription)")
+                return
+            }
+
+            let dateFormatter = ISO8601DateFormatter()
+            var samplesArray: [[String: Any]] = []
+
+            for sample in (samples as? [HKQuantitySample]) ?? [] {
+                samplesArray.append([
+                    "mass": sample.quantity.doubleValue(for: HKUnit.gramUnit(with: .kilo)),
+                    "timestamp": dateFormatter.string(from: sample.startDate),
+                    "metadata": [
+                        "id": sample.uuid.uuidString,
+                        "lastModifiedTime": dateFormatter.string(from: sample.endDate),
+                        "clientRecordId": sample.metadata?["clientRecordId"] as? String ?? "",
+                        "dataOrigin": sample.sourceRevision.source.bundleIdentifier
+                    ]
+                ])
+            }
+
+            call.resolve(["samples": samplesArray])
+        }
+
+        healthStore.execute(query)
+    }
+
     @objc func queryBodyTemperature(_ call: CAPPluginCall) {
         guard HKHealthStore.isHealthDataAvailable() else {
             call.reject("Health data is not available on this device")

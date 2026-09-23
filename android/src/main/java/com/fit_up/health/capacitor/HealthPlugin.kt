@@ -1018,6 +1018,180 @@ class HealthPlugin : Plugin() {
             call.reject(e.message)
         }
     }
+
+    @PluginMethod
+    fun queryWeights(call: PluginCall) {
+        val startDate = call.getString("startDate")
+        val endDate = call.getString("endDate")
+        if (startDate == null || endDate == null) {
+            call.reject("Missing required parameters: startDate or endDate")
+            return
+        }
+
+        try {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    if (!hasPermission(CapHealthPermission.READ_WEIGHT)) {
+                        call.reject("Weight permission not granted")
+                        return@launch
+                    }
+
+                    val startInstant = Instant.parse(startDate)
+                    val endInstant = Instant.parse(endDate)
+                    val samples = JSArray()
+                    var pageToken: String? = null
+
+                    do {
+                        val request = ReadRecordsRequest(
+                            recordType = WeightRecord::class,
+                            timeRangeFilter = TimeRangeFilter.between(startInstant, endInstant),
+                            ascendingOrder = true,
+                            pageSize = 1000,
+                            pageToken = pageToken
+                        )
+                        val response = healthConnectClient.readRecords(request)
+                        for (weightRecord in response.records) {
+                            samples.put(JSObject().apply {
+                                put("weight", weightRecord.weight.inKilograms)
+                                put("timestamp", weightRecord.time.toString())
+                                put("metadata", JSObject().apply {
+                                    put("id", weightRecord.metadata.id)
+                                    put("lastModifiedTime", weightRecord.metadata.lastModifiedTime.toString())
+                                    put("clientRecordId", weightRecord.metadata.clientRecordId ?: "")
+                                    put("dataOrigin", weightRecord.metadata.dataOrigin.packageName)
+                                })
+                            })
+                        }
+                        pageToken = response.pageToken
+                    } while (pageToken != null)
+
+                    call.resolve(JSObject().apply {
+                        put("samples", samples)
+                    })
+                } catch (e: Exception) {
+                    call.reject("Error reading weight samples: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun queryBodyFatPercentages(call: PluginCall) {
+        val startDate = call.getString("startDate")
+        val endDate = call.getString("endDate")
+        if (startDate == null || endDate == null) {
+            call.reject("Missing required parameters: startDate or endDate")
+            return
+        }
+
+        try {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    if (!hasPermission(CapHealthPermission.READ_BODY_FAT_PERCENTAGE)) {
+                        call.reject("Body fat percentage permission not granted")
+                        return@launch
+                    }
+
+                    val startInstant = Instant.parse(startDate)
+                    val endInstant = Instant.parse(endDate)
+                    val samples = JSArray()
+                    var pageToken: String? = null
+
+                    do {
+                        val request = ReadRecordsRequest(
+                            recordType = BodyFatRecord::class,
+                            timeRangeFilter = TimeRangeFilter.between(startInstant, endInstant),
+                            ascendingOrder = true,
+                            pageSize = 1000,
+                            pageToken = pageToken
+                        )
+                        val response = healthConnectClient.readRecords(request)
+                        for (bodyFatRecord in response.records) {
+                            samples.put(JSObject().apply {
+                                put("percentage", bodyFatRecord.percentage.value)
+                                put("timestamp", bodyFatRecord.time.toString())
+                                put("metadata", JSObject().apply {
+                                    put("id", bodyFatRecord.metadata.id)
+                                    put("lastModifiedTime", bodyFatRecord.metadata.lastModifiedTime.toString())
+                                    put("clientRecordId", bodyFatRecord.metadata.clientRecordId ?: "")
+                                    put("dataOrigin", bodyFatRecord.metadata.dataOrigin.packageName)
+                                })
+                            })
+                        }
+                        pageToken = response.pageToken
+                    } while (pageToken != null)
+
+                    call.resolve(JSObject().apply {
+                        put("samples", samples)
+                    })
+                } catch (e: Exception) {
+                    call.reject("Error reading body fat percentage samples: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun queryLeanBodyMasses(call: PluginCall) {
+        val startDate = call.getString("startDate")
+        val endDate = call.getString("endDate")
+        if (startDate == null || endDate == null) {
+            call.reject("Missing required parameters: startDate or endDate")
+            return
+        }
+
+        try {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    if (!hasPermission(CapHealthPermission.READ_LEAN_BODY_MASS)) {
+                        call.reject("Lean body mass permission not granted")
+                        return@launch
+                    }
+
+                    val startInstant = Instant.parse(startDate)
+                    val endInstant = Instant.parse(endDate)
+                    val samples = JSArray()
+                    var pageToken: String? = null
+
+                    do {
+                        val request = ReadRecordsRequest(
+                            recordType = LeanBodyMassRecord::class,
+                            timeRangeFilter = TimeRangeFilter.between(startInstant, endInstant),
+                            ascendingOrder = true,
+                            pageSize = 1000,
+                            pageToken = pageToken
+                        )
+                        val response = healthConnectClient.readRecords(request)
+                        for (leanBodyMassRecord in response.records) {
+                            samples.put(JSObject().apply {
+                                put("mass", leanBodyMassRecord.mass.inKilograms)
+                                put("timestamp", leanBodyMassRecord.time.toString())
+                                put("metadata", JSObject().apply {
+                                    put("id", leanBodyMassRecord.metadata.id)
+                                    put("lastModifiedTime", leanBodyMassRecord.metadata.lastModifiedTime.toString())
+                                    put("clientRecordId", leanBodyMassRecord.metadata.clientRecordId ?: "")
+                                    put("dataOrigin", leanBodyMassRecord.metadata.dataOrigin.packageName)
+                                })
+                            })
+                        }
+                        pageToken = response.pageToken
+                    } while (pageToken != null)
+
+                    call.resolve(JSObject().apply {
+                        put("samples", samples)
+                    })
+                } catch (e: Exception) {
+                    call.reject("Error reading lean body mass samples: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            call.reject(e.message)
+        }
+    }
     
     @PluginMethod
     fun queryHeartRate(call: PluginCall) {

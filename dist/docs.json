@@ -183,11 +183,30 @@
         "parameters": [],
         "returns": "Promise<WeightData>",
         "tags": [],
-        "docs": "Query weight data",
+        "docs": "Query latest weight (most recent sample)",
         "complexTypes": [
           "WeightData"
         ],
         "slug": "queryweight"
+      },
+      {
+        "name": "queryWeights",
+        "signature": "(request: QueryBodySampleRequest) => Promise<QueryWeightsResponse>",
+        "parameters": [
+          {
+            "name": "request",
+            "docs": "",
+            "type": "QueryBodySampleRequest"
+          }
+        ],
+        "returns": "Promise<QueryWeightsResponse>",
+        "tags": [],
+        "docs": "Query weight samples in a date range (ISO8601 start/end).",
+        "complexTypes": [
+          "QueryWeightsResponse",
+          "QueryBodySampleRequest"
+        ],
+        "slug": "queryweights"
       },
       {
         "name": "queryBodyFatPercentage",
@@ -202,6 +221,25 @@
         "slug": "querybodyfatpercentage"
       },
       {
+        "name": "queryBodyFatPercentages",
+        "signature": "(request: QueryBodySampleRequest) => Promise<QueryBodyFatPercentagesResponse>",
+        "parameters": [
+          {
+            "name": "request",
+            "docs": "",
+            "type": "QueryBodySampleRequest"
+          }
+        ],
+        "returns": "Promise<QueryBodyFatPercentagesResponse>",
+        "tags": [],
+        "docs": "Query body fat percentage samples in a date range (ISO8601 start/end).\nValues are 0–100.",
+        "complexTypes": [
+          "QueryBodyFatPercentagesResponse",
+          "QueryBodySampleRequest"
+        ],
+        "slug": "querybodyfatpercentages"
+      },
+      {
         "name": "queryLeanBodyMass",
         "signature": "() => Promise<LeanBodyMassData>",
         "parameters": [],
@@ -212,6 +250,25 @@
           "LeanBodyMassData"
         ],
         "slug": "queryleanbodymass"
+      },
+      {
+        "name": "queryLeanBodyMasses",
+        "signature": "(request: QueryBodySampleRequest) => Promise<QueryLeanBodyMassesResponse>",
+        "parameters": [
+          {
+            "name": "request",
+            "docs": "",
+            "type": "QueryBodySampleRequest"
+          }
+        ],
+        "returns": "Promise<QueryLeanBodyMassesResponse>",
+        "tags": [],
+        "docs": "Query lean body mass samples in a date range (ISO8601 start/end).\nValues are kilograms.",
+        "complexTypes": [
+          "QueryLeanBodyMassesResponse",
+          "QueryBodySampleRequest"
+        ],
+        "slug": "queryleanbodymasses"
       },
       {
         "name": "queryBodyTemperature",
@@ -900,6 +957,47 @@
       ]
     },
     {
+      "name": "QueryWeightsResponse",
+      "slug": "queryweightsresponse",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "samples",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "WeightData"
+          ],
+          "type": "WeightData[]"
+        }
+      ]
+    },
+    {
+      "name": "QueryBodySampleRequest",
+      "slug": "querybodysamplerequest",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "startDate",
+          "tags": [],
+          "docs": "ISO8601 start date",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "endDate",
+          "tags": [],
+          "docs": "ISO8601 end date",
+          "complexTypes": [],
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "BodyFatPercentageData",
       "slug": "bodyfatpercentagedata",
       "docs": "",
@@ -930,6 +1028,24 @@
       ]
     },
     {
+      "name": "QueryBodyFatPercentagesResponse",
+      "slug": "querybodyfatpercentagesresponse",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "samples",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "BodyFatPercentageData"
+          ],
+          "type": "BodyFatPercentageData[]"
+        }
+      ]
+    },
+    {
       "name": "LeanBodyMassData",
       "slug": "leanbodymassdata",
       "docs": "",
@@ -956,6 +1072,24 @@
           "docs": "",
           "complexTypes": [],
           "type": "{ id: string; lastModifiedTime: string; clientRecordId: string; dataOrigin: string; } | undefined"
+        }
+      ]
+    },
+    {
+      "name": "QueryLeanBodyMassesResponse",
+      "slug": "queryleanbodymassesresponse",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "samples",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "LeanBodyMassData"
+          ],
+          "type": "LeanBodyMassData[]"
         }
       ]
     },

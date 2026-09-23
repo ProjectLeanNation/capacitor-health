@@ -62,17 +62,31 @@ export interface HealthPlugin {
      */
     queryHeight(): Promise<HeightData>;
     /**
-     * Query weight data
+     * Query latest weight (most recent sample)
      */
     queryWeight(): Promise<WeightData>;
+    /**
+     * Query weight samples in a date range (ISO8601 start/end).
+     */
+    queryWeights(request: QueryBodySampleRequest): Promise<QueryWeightsResponse>;
     /**
      * Query latest body fat percentage (0–100)
      */
     queryBodyFatPercentage(): Promise<BodyFatPercentageData>;
     /**
+     * Query body fat percentage samples in a date range (ISO8601 start/end).
+     * Values are 0–100.
+     */
+    queryBodyFatPercentages(request: QueryBodySampleRequest): Promise<QueryBodyFatPercentagesResponse>;
+    /**
      * Query latest lean body mass in kilograms
      */
     queryLeanBodyMass(): Promise<LeanBodyMassData>;
+    /**
+     * Query lean body mass samples in a date range (ISO8601 start/end).
+     * Values are kilograms.
+     */
+    queryLeanBodyMasses(request: QueryBodySampleRequest): Promise<QueryLeanBodyMassesResponse>;
     /**
      * Query body temperature data
      * @returns Body temperature data
@@ -242,6 +256,15 @@ export interface WeightData {
         dataOrigin: string;
     };
 }
+export interface QueryBodySampleRequest {
+    /** ISO8601 start date */
+    startDate: string;
+    /** ISO8601 end date */
+    endDate: string;
+}
+export interface QueryWeightsResponse {
+    samples: WeightData[];
+}
 export interface BodyFatPercentageData {
     percentage: number | null;
     timestamp: string | null;
@@ -252,6 +275,9 @@ export interface BodyFatPercentageData {
         dataOrigin: string;
     };
 }
+export interface QueryBodyFatPercentagesResponse {
+    samples: BodyFatPercentageData[];
+}
 export interface LeanBodyMassData {
     mass: number | null;
     timestamp: string | null;
@@ -261,6 +287,9 @@ export interface LeanBodyMassData {
         clientRecordId: string;
         dataOrigin: string;
     };
+}
+export interface QueryLeanBodyMassesResponse {
+    samples: LeanBodyMassData[];
 }
 export interface QueryHeartRateRequest {
     startDate: string;
