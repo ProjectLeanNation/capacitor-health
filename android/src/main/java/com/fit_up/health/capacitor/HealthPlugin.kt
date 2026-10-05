@@ -252,14 +252,18 @@ class HealthPlugin : Plugin() {
             return
         }
 
-        val permissions = permissionsToRequest.toList<String>().mapNotNull { CapHealthPermission.from(it) }.toSet()
-        val permissionsToAsk = if (isReadHealthDataHistoryAvailable()) {
-            permissions
-        } else {
-            permissions.filter { it != CapHealthPermission.READ_HEALTH_DATA_HISTORY }.toSet()
-        }
-        val healthConnectPermissions = permissionsToAsk.mapNotNull { permissionMapping[it] }.toSet()
+        val permissions =
+            permissionsToRequest.toList<String>().mapNotNull { CapHealthPermission.from(it) }.toMutableSet()
 
+        // Always ask for older-than-30-day history when Health Connect supports it.
+        // Without this grant, aggregates/reads silently omit (or error on) older samples.
+        if (isReadHealthDataHistoryAvailable()) {
+            permissions.add(CapHealthPermission.READ_HEALTH_DATA_HISTORY)
+        } else {
+            permissions.remove(CapHealthPermission.READ_HEALTH_DATA_HISTORY)
+        }
+
+        val healthConnectPermissions = permissions.mapNotNull { permissionMapping[it] }.toSet()
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
