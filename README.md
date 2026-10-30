@@ -66,6 +66,8 @@ npx cap sync
     <uses-permission android:name="android.permission.health.READ_LEAN_BODY_MASS" />
 ```
 
+`READ_HEALTH_DATA_HISTORY` is required to read Health Connect samples older than ~30 days before the app was first granted access. The plugin also merges this permission from its own `AndroidManifest.xml`, and will request it automatically when history support is available on the device.
+
 Skeletal muscle mass is not supported: neither Apple HealthKit nor Google Health Connect exposes a native data type for it, so this plugin does not sync that metric.
 
 `exercise-minutes` (via `queryAggregated`) is the closest shared metric, not an identical definition: iOS reads Apple Exercise Time (Activity ring minutes); Android sums Health Connect exercise-session duration. Both require `READ_EXERCISE_MINUTES` (Android maps to `READ_EXERCISE`, already listed above).
